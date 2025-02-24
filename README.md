@@ -29,6 +29,7 @@
 4.inference.ipynb	Классификация резюме с Llama-3.1-8B-Instruct.
 5.local_inference.ipynb	Локальный инференс на русском с моделью T-lite-it-1.0.
 
-📬 Контакты
-    - Telegram: `@Vlodimirshil`
-    - Email: `vladimir@itmo.ru`
+## 📬 Контакты
+Telegram: `@Vlodimirshil`
+    
+Email: `vladimir@itmo.ru`
