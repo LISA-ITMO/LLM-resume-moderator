@@ -1,4 +1,4 @@
-# LLM Resume Moderator & Generator 🔍✨
+# LLM Resume Moderator
 
 Проект для автоматизации модерации резюме на русском языке с использованием современных языковых моделей.
 
@@ -30,7 +30,5 @@
 5.local_inference.ipynb	Локальный инференс на русском с моделью T-lite-it-1.0.
 
 📬 Контакты
-
-    Telegram: @Vlodimirshil
-    
-    Email: vladimir@itmo.ru
+    - Telegram: `@Vlodimirshil`
+    - Email: `vladimir@itmo.ru`
