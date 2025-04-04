@@ -1,9 +1,9 @@
 from openai import AsyncOpenAI
 
-from config import MLP_API_KEY, DEFAULT_MODERATOR, PROMPT
-from schemas import Rool
+from config import MLP_API_KEY, DEFAULT_MODERATOR, PROMPT, DEFAULT_ROOLS
+from schemas import Rool, ResponseWithReasoning
 
-from typing import List, Dict
+from typing import List
 import json
 
 
@@ -13,7 +13,7 @@ client = AsyncOpenAI(
 )
 
 
-def parse_answer(response_str: str) -> None:
+def parse_answer(response_str: str) -> ResponseWithReasoning:
     parts = response_str.split("Результат:")
     
     reasoning = parts[0].replace("Рассуждения:\n", "").strip()
@@ -23,13 +23,13 @@ def parse_answer(response_str: str) -> None:
     except json.JSONDecodeError:
         result_dict = {"error": "Invalid JSON format"}
     
-    return {
-        "reasoning": reasoning,
-        "result": result_dict
-    }
+    return ResponseWithReasoning.model_validate({"reasoning": reasoning, "result": result_dict})
 
 
-async def llm_answer(resume_text: str, rools: List[Rool], moderator_model: str=None) -> None:
+async def llm_answer(resume_text: str, rools: List[Rool]=None, moderator_model: str=None) -> ResponseWithReasoning:
+
+    if rools is None:
+        rools = DEFAULT_ROOLS
 
     formatted_prompt = PROMPT.replace('{rools}', '\n'.join([rool.model_dump_json() for rool in rools])).replace('{resume_text}', resume_text)
 
