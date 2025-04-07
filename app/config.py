@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 
-from schemas import Rool
+from schemas import Rule
 
 import os
 import json
@@ -15,13 +15,18 @@ if os.environ.get('DEFAULT_MODERATOR'):
 else:
     DEFAULT_MODERATOR = 'just-ai/t-tech-T-pro-it-1.0'
 
-DEFAULT_ROOLS = [Rool(**rool) for rool in json.load(open('resume_rools.json'))]
+if os.environ.get('PROVIDER_URL'):
+    PROVIDER_URL = os.environ.get('PROVIDER_URL')
+else:
+    PROVIDER_URL = 'https://caila.io/api/adapters/openai'
+
+DEFAULT_RULES = [Rule(**rule) for rule in json.load(open('resume_rules.json'))]
 
 PROMPT = """
 Ты — ИИ-модератор резюме. Проверь текст резюме на соответствие следующим правилам. Если есть нарушения, верни JSON-объект с типом нарушения и фрагментом текста, который нарушает правило. Если нарушений нет, верни статус "OK".
 
 **Правила:** 
-{rools}
+{rules}
 
 **Инструкции:**
 
@@ -35,3 +40,5 @@ PROMPT = """
 **Текст резюме:**
 {resume_text}
 """
+
+FASTAPI_PORT = 8000

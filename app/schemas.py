@@ -9,12 +9,12 @@ class ModerationStatus(str, Enum):
     VIOLATION = 'VIOLATION'
 
 
-class Rool(BaseModel):
+class Rule(BaseModel):
     id: str
     condition: str
 
 
-class ViolatedRool(BaseModel):
+class ViolatedRule(BaseModel):
     id: str
     condition: str
     resume_fragment: str
@@ -22,9 +22,22 @@ class ViolatedRool(BaseModel):
 
 class ModeratorResponse(BaseModel):
     status: ModerationStatus
-    violated_rools: List[ViolatedRool]
+    violated_rules: List[ViolatedRule]
 
 
 class ResponseWithReasoning(BaseModel):
     reasoning: str
     result: ModeratorResponse
+
+
+class Resume(BaseModel):
+    experience: str
+    job_title: str
+    education: str
+    additional_education: str
+
+
+class ModerationContext(BaseModel):
+    rules: List[Rule] | None
+    moderation_model: str | None
+    resume: Resume

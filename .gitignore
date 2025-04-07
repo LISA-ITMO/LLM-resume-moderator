@@ -2,3 +2,4 @@
 processing_checkpoints/
 data/resume_sql_dumps
 __pycache__/
+venv/

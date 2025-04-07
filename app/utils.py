@@ -1,48 +1,32 @@
-from openai import AsyncOpenAI
+import platform
+import os 
+import subprocess
 
-from config import MLP_API_KEY, DEFAULT_MODERATOR, PROMPT, DEFAULT_ROOLS
-from schemas import Rool, ResponseWithReasoning
-
-from typing import List
-import json
-
-
-client = AsyncOpenAI(
-    api_key=MLP_API_KEY,
-    base_url="https://caila.io/api/adapters/openai"
-)
-
-
-def parse_answer(response_str: str) -> ResponseWithReasoning:
-    parts = response_str.split("Результат:")
-    
-    reasoning = parts[0].replace("Рассуждения:\n", "").strip()
-
+def kill_port(port: int):
     try:
-        result_dict = json.loads(parts[1])
-    except json.JSONDecodeError:
-        result_dict = {"error": "Invalid JSON format"}
+        if platform.system() == 'Windows':
+            netstat_args = '-ano'
+        else:
+            netstat_args = '-tulpn'
+
+        result = subprocess.run(
+            ["netstat", netstat_args],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        
+        lines = result.stdout.splitlines()
+        pid_to_kill = None
+        for line in lines:
+            if f":{port}" in line:
+                pid_to_kill = int(line.split()[-1].split('/')[0])
+                break
+        
+        if pid_to_kill:
+            os.kill(pid_to_kill, 9)
+        else:
+            print(f"No process found running on port {port}.")
     
-    return ResponseWithReasoning.model_validate({"reasoning": reasoning, "result": result_dict})
-
-
-async def llm_answer(resume_text: str, rools: List[Rool]=None, moderator_model: str=None) -> ResponseWithReasoning:
-
-    if rools is None:
-        rools = DEFAULT_ROOLS
-
-    formatted_prompt = PROMPT.replace('{rools}', '\n'.join([rool.model_dump_json() for rool in rools])).replace('{resume_text}', resume_text)
-
-    completion = await client.chat.completions.create(
-        messages=[
-            {
-                "role": "user",
-                "content": formatted_prompt
-            }
-        ],
-        model=DEFAULT_MODERATOR,
-    )
-    
-    answer_content = completion.choices[0].message
-
-    return parse_answer(answer_content)
+    except Exception as e:
+        print(f"An error occurred: {e}")
