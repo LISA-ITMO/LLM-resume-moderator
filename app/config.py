@@ -13,12 +13,12 @@ MLP_API_KEY =  os.environ.get("MLP_API_KEY")
 if os.environ.get('DEFAULT_MODERATOR'):
     DEFAULT_MODERATOR = os.environ.get('DEFAULT_MODERATOR')
 else:
-    DEFAULT_MODERATOR = 'just-ai/t-tech-T-pro-it-1.0'
+    DEFAULT_MODERATOR = 't-lite-it-1.0-q8_0.gguf'
 
 if os.environ.get('PROVIDER_URL'):
     PROVIDER_URL = os.environ.get('PROVIDER_URL')
 else:
-    PROVIDER_URL = 'https://caila.io/api/adapters/openai'
+    PROVIDER_URL = 'http://llm-service:8000/v1'
 
 DEFAULT_RULES = [Rule(**rule) for rule in json.load(open('resume_rules.json'))]
 

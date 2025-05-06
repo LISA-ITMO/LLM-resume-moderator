@@ -1,0 +1,24 @@
+version: '3.12'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8080:80"
+    networks:
+      - app-network
+    depends_on:
+      - llm-service
+
+  llm-service:
+    build: ./llm
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '16.00'
+
+networks:
+  app-network:
+    driver: bridge
