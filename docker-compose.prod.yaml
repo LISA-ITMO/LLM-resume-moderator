@@ -1,23 +1,19 @@
 version: '3.12'
 
 services:
-  backend:
-    build: ./backend
+  moderator-service:
+    image: toponedevopssng/moderator_service:1.0
     ports:
-      - "8080:80"
+      - "8000:8000"
     networks:
       - app-network
     depends_on:
       - llm-service
 
   llm-service:
-    build: ./llm
+    image: toponedevopssng/llm-service:1.0
     networks:
       - app-network
-    deploy:
-      resources:
-        limits:
-          cpus: '16.00'
 
 networks:
   app-network:

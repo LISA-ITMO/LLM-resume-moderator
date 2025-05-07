@@ -14,15 +14,15 @@ client = AsyncOpenAI(
     base_url=PROVIDER_URL,
     http_client=AsyncClient(
         proxy=None,
-        timeout=30.0
+        timeout=240.0
     )
 )
 
 
 def parse_answer(response_str: str) -> ResponseWithReasoning:
-    parts = response_str.split("**Результат:**")
+    parts = response_str.split("Результат:")
     
-    reasoning = parts[0].replace("**Рассуждения:**\n", "").strip()
+    reasoning = parts[0].replace("Рассуждения:", "").strip()
 
     json_match = re.search(r'```json\n(.*?)\n```', parts[1], re.DOTALL)
     json_str = json_match.group(1) if json_match else '{}'
