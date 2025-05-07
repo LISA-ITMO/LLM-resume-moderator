@@ -23,31 +23,11 @@
 
 ## 🚀 **Развёртывание**
 
-### Способ 1: Docker
 ```bash
-docker run -d \
-  -e MLP_API_KEY='ваш_openai_ключ' \
-  -e DEFAULT_MODERATOR='just-ai/t-tech-T-pro-it-1.0' \
-  -e PROVIDER_URL='https://caila.io/api/adapters/openai' \
-  -p 8000:8000 \
-  toponedevopssng/llm-resume-moderator:latest
+git clone https://github.com/LISA-ITMO/LLM-resume-moderator.git &&
+cd LLM-resume-moderator &&
+docker-compose -f docker-compose.prod.yaml up -d 
 ```
-
-### Способ 2: Python
-```bash
-cd app
-
-echo "MLP_API_KEY='ваш_openai_ключ'
-DEFAULT_MODERATOR='just-ai/t-tech-T-pro-it-1.0'
-PROVIDER_URL='https://caila.io/api/adapters/openai'" > .env
-
-pip install -r requirements.txt
-python main.py
-```
-
-**Переменные окружения** (значения по умолчанию):
-- `DEFAULT_MODERATOR`: Модель для модерации (`just-ai/t-tech-T-pro-it-1.0`)
-- `PROVIDER_URL`: Провайдер OpenAI-совместимого API (`https://caila.io/api/adapters/openai`)
 
 ## **🌐 Доступ к демо**
 Сервис уже развёрнут и доступен по адресам:
