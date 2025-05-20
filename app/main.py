@@ -6,8 +6,10 @@ from config import FASTAPI_PORT
 from routers import router as moderation_router
 
 
-app = FastAPI(title='LLM Resume Moderator API',
-              description='Here is LLM Resume Moderator fastapi backend')
+app = FastAPI(
+    title="LLM Resume Moderator API",
+    description="Here is LLM Resume Moderator fastapi backend",
+)
 
 app.include_router(moderation_router)
 
