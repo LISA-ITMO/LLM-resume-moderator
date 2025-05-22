@@ -5,13 +5,15 @@ from fastapi.testclient import TestClient
 import sys
 sys.path.append(os.sep.join(sys.path[0].split(os.sep)[:-1]))
 
+# Force LLM_PROVIDER to be caila.io for tests
+os.environ["LLM_PROVIDER"] = "caila.io"
+os.environ["MLP_API_KEY"] = "no-key-required"
+os.environ["ELASTIC_PASSWORD"] = "no-key-required"
+
 from main import app
 from config import llm_providers
 from test_utils import OpenAiMessageMock, OpenAiChoiceMock, OpenAiRespMock, success_content, violation_content
 
-
-# Force LLM_PROVIDER to be caila.io for tests
-os.environ["LLM_PROVIDER"] = "caila.io"
 
 # Remove logging middleware for tests
 app.user_middleware = []
