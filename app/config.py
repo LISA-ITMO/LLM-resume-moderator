@@ -3,9 +3,7 @@ from dotenv import load_dotenv
 import os
 
 
-load_dotenv()
-if not os.getenv("LLM_PROVIDER"):
-    load_dotenv("../.env")
+load_dotenv("../.env")
 
 ELASTIC_PASSWORD = os.environ.get('ELASTIC_PASSWORD')
 
