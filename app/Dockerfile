@@ -5,10 +5,10 @@ WORKDIR /app
 COPY *.py .
 COPY requirements.txt .
 COPY resume_rules.json .
-COPY .env .
+COPY ../.env .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 8000
 
-CMD ["python", "main.py"]
+CMD ["python", "main.py"] 
