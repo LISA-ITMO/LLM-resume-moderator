@@ -13,9 +13,6 @@ es = Elasticsearch(
     verify_certs=False
 )
 
-if not es.ping():
-    raise Exception("Elasticsearch is not available")
-
 
 class ElasticsearchHandler(logging.Handler):
     def emit(self, record):
