@@ -1,8 +1,8 @@
 from openai import AsyncOpenAI
 from httpx import AsyncClient
 
-from config import MLP_API_KEY, DEFAULT_MODERATOR, PROMPT, DEFAULT_RULES, PROVIDER_URL
-from schemas import Rule, ResponseWithReasoning, Resume
+from config import MLP_API_KEY, DEFAULT_MODERATOR, PROMPT, PROVIDER_URL, MODELS_DICT
+from schemas import Rule, ResponseWithReasoning, Resume, DEFAULT_RULES
 
 from typing import List
 import json
@@ -36,12 +36,13 @@ def parse_answer(response_str: str) -> ResponseWithReasoning:
 
 
 async def moderate(resume: Resume, rules: List[Rule]=None, moderator_model: str=None) -> ResponseWithReasoning:
-
     if rules is None:
         rules = DEFAULT_RULES
     
     if moderator_model is None:
-        moderator_model = DEFAULT_MODERATOR
+        provider_model_name = MODELS_DICT[DEFAULT_MODERATOR]
+    else:
+        provider_model_name = MODELS_DICT[moderator_model.name]
 
     resume_text = 'Опыт работы: ' + resume.experience + '\n' + 'Желаемая должность: ' + resume.job_title + '\n' + 'Образование: ' + resume.additional_education + '\n' + 'ДПО: ' + resume.additional_education
 
@@ -54,11 +55,9 @@ async def moderate(resume: Resume, rules: List[Rule]=None, moderator_model: str=
                 "content": formatted_prompt
             }
         ],
-        model=moderator_model,
+        model=provider_model_name,
     )
     
     answer_content = completion.choices[0].message.content
-
-    print(answer_content)
 
     return parse_answer(answer_content)
