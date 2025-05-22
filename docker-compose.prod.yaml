@@ -2,7 +2,7 @@ version: '3.12'
 
 services:
   moderator-service:
-    image: ghcr.io/LISA-ITMO/LLM-resume-moderator/app:latest
+    image: ghcr.io/lisa-itmo/llm-resume-moderator/app:latest
     environment:
       - MLP_API_KEY=${MLP_API_KEY}
       - LLM_PROVIDER=${LLM_PROVIDER}
@@ -13,13 +13,14 @@ services:
       - app-network
       - elk
     depends_on:
-      - llm-service
       - elasticsearch
 
   llm-service:
     image: toponedevopssng/llm-service:1.0
     networks:
       - app-network
+    profiles:
+      - llm-local
 
 
   elasticsearch:
