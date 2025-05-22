@@ -2,7 +2,11 @@ version: '3.12'
 
 services:
   moderator-service:
-    image: toponedevopssng/moderator_service:1.0
+    image: ghcr.io/LISA-ITMO/LLM-resume-moderator/app:latest
+    environment:
+      - MLP_API_KEY=${MLP_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
     ports:
       - "8000:8000"
     networks:
@@ -10,7 +14,7 @@ services:
       - elk
     depends_on:
       - llm-service
-      - kibana
+      - elasticsearch
 
   llm-service:
     image: toponedevopssng/llm-service:1.0
