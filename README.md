@@ -23,7 +23,7 @@
 
 ## 🚀 **Развёртывание**
 
-## **Приготовления**
+### **Приготовления**
 ```bash
 git clone https://github.com/LISA-ITMO/LLM-resume-moderator.git &&
 cd LLM-resume-moderator &&
