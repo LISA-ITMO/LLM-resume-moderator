@@ -23,9 +23,24 @@
 
 ## 🚀 **Развёртывание**
 
+## **Приготовления**
 ```bash
 git clone https://github.com/LISA-ITMO/LLM-resume-moderator.git &&
 cd LLM-resume-moderator &&
+docker login ghcr.io -u {ВАШ_НИК_ГИТХАБ} -p {ВАШ_ГИХАБ_ТОКЕН} &&
+echo "ELASTIC_PASSWORD='MY_SECRET_ELK_PASS'" >> .env &&
+echo "KIBANA_PASSWORD='MY_SECRET_KIBANA_PASS'" >> .env
+```
+
+### **Запуск с локальной LLM**
+```bash
+docker-compose -f docker-compose.prod.yaml --profile llm-local up -d 
+```
+
+### **Запуск с LLM по API**
+```bash
+echo "MLP_API_KEY='{ВАШ_ТОКЕН_caila.io}'" >> .env &&
+echo "LLM_PROVIDER='caila.io'" >> .env &&
 docker-compose -f docker-compose.prod.yaml up -d 
 ```
 
