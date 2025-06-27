@@ -86,11 +86,14 @@ services:
     environment:
       TARGET_URL: "http://moderator-service:8000/moderator/answer"
     command: >
-      sh -c 'echo "Sending test request to $${TARGET_URL}";
-      curl -X POST "$${TARGET_URL}" 
-        -H "Content-Type: application/json" 
-        -d "{\"rules\": null, \"moderation_model\": null, \"resume\": {\"experience\": \"1 год веб дизайн\", \"job_title\": \"веб дизайнер\", \"education\": \"Высшее\", \"additional_education\": \"нет\"}}";
-      echo -e "\nRequest completed with status: $$?"'
+      sh -c '
+      REQUEST_BODY='\''{"rules": null, "moderation_model": null, "resume": {"experience": "1 год веб дизайн", "job_title": "веб дизайнер", "education": "Высшее", "additional_education": "нет"}}'\'';
+      echo "Sending test request to $${TARGET_URL}";
+      curl -X POST "$${TARGET_URL}" \
+        -H "Content-Type: application/json" \
+        -d "$${REQUEST_BODY}";
+      echo -e "\nRequest completed with status: $$?"
+      '
 
 volumes:
   es_data:
