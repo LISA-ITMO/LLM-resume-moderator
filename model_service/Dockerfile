@@ -6,4 +6,4 @@ RUN pip install llama-cpp-python[server]
 WORKDIR /app
 COPY t-lite-it-1.0-q8_0.gguf .
 
-CMD ["python3", "-m", "llama_cpp.server",  "--model", "/app/t-lite-it-1.0-q8_0.gguf", "--n_threads", "16", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python3", "-m", "llama_cpp.server",  "--model", "/app/t-lite-it-1.0-q8_0.gguf", "--use_mmap", "True", "--cache", "True", "--cache_type", "ram", "--n_threads", "16", "--host", "0.0.0.0", "--port", "8000"]

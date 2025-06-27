@@ -16,7 +16,7 @@ services:
       - elasticsearch
 
   llm-service:
-    image: toponedevopssng/llm-service:1.0
+    image: toponedevopssng/llm-service:1.1
     networks:
       - app-network
     profiles:
@@ -69,6 +69,22 @@ services:
       - elk
     depends_on:
       - configure-kibana-password
+
+  cache-request:
+    image: curlimages/curl:latest
+    networks:
+      - app-network
+    depends_on:
+      moderator-service:
+        condition: service_healthy
+    environment:
+      TARGET_URL: "http://moderator-service:8000/moderator/answer"
+    command: >
+      sh -c 'echo "Sending test request to $${TARGET_URL}";
+      curl -X POST "$${TARGET_URL}" 
+        -H "Content-Type: application/json" 
+        -d "{\"rules\": null, \"moderation_model\": null, \"resume\": {\"experience\": \"1 год веб дизайн\", \"job_title\": \"веб дизайнер\", \"education\": \"Высшее\", \"additional_education\": \"нет\"}}";
+      echo -e "\nRequest completed with status: $$?"'
 
 volumes:
   es_data:

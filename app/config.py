@@ -9,7 +9,7 @@ ELASTIC_PASSWORD = os.environ.get('ELASTIC_PASSWORD')
 
 llm_providers = {
     'local': {
-        'PROVIDER_URL': 'http://localhost:8001/v1',
+        'PROVIDER_URL': 'http://llm-service:8000/v1',
         'MLP_API_KEY': 'sk-no-key-required',
         'models': {
             'T_it_1_0': 't-lite-it-1.0-q8_0.gguf'

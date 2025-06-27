@@ -34,6 +34,7 @@ echo "KIBANA_PASSWORD='MY_SECRET_KIBANA_PASS'" >> .env
 
 ### **Запуск с локальной LLM**
 ```bash
+echo "LLM_PROVIDER='local'" >> .env &&
 docker-compose -f docker-compose.prod.yaml --profile llm-local up -d 
 ```
 
