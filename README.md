@@ -35,14 +35,14 @@ echo "KIBANA_PASSWORD='MY_SECRET_KIBANA_PASS'" >> .env
 ### **Запуск с локальной LLM**
 ```bash
 echo "LLM_PROVIDER='local'" >> .env &&
-docker-compose -f docker-compose.prod.yaml --profile llm-local up -d 
+docker-compose -f docker-compose.prod.yaml --profile llm-local up --pull always -d 
 ```
 
 ### **Запуск с LLM по API**
 ```bash
 echo "MLP_API_KEY='{ВАШ_ТОКЕН_caila.io}'" >> .env &&
 echo "LLM_PROVIDER='caila.io'" >> .env &&
-docker-compose -f docker-compose.prod.yaml up -d 
+docker-compose -f docker-compose.prod.yaml up --pull always -d 
 ```
 
 ## **🌐 Доступ к демо**
