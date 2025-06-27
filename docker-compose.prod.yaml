@@ -16,7 +16,7 @@ services:
       - elasticsearch
 
   llm-service:
-    image: toponedevopssng/llm-service:1.0
+    image: toponedevopssng/llm-service:1.1
     networks:
       - app-network
     profiles:
