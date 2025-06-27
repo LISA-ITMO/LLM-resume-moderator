@@ -2,11 +2,14 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY *.py .
-COPY requirements.txt .
-COPY resume_rules.json .
 
+RUN apt update && apt install curl
+
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+COPY *.py .
+COPY resume_rules.json .
 
 EXPOSE 8000
 
