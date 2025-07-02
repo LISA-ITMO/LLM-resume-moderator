@@ -2,7 +2,7 @@ version: '3.12'
 
 services:
   moderator-service:
-    image: docker pull ghcr.io/lisa-itmo/llm-resume-moderator/app:main
+    image: ghcr.io/lisa-itmo/llm-resume-moderator/app:main
     environment:
       - MLP_API_KEY=${MLP_API_KEY}
       - LLM_PROVIDER=${LLM_PROVIDER}
