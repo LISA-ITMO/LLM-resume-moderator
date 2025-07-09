@@ -14,7 +14,6 @@ services:
       - elk
     depends_on:
       - elasticsearch
-      - llm-service
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
       interval: 10s
