@@ -28,14 +28,14 @@
 git clone https://github.com/LISA-ITMO/LLM-resume-moderator.git &&
 cd LLM-resume-moderator &&
 docker login ghcr.io -u {ВАШ_НИК_ГИТХАБ} -p {ВАШ_ГИХАБ_ТОКЕН} &&
-echo "ELASTIC_PASSWORD='MY_SECRET_ELK_PASS'" >> .env &&
-echo "KIBANA_PASSWORD='MY_SECRET_KIBANA_PASS'" >> .env
+echo "ELASTIC_PASSWORD=MY_SECRET_ELK_PASS" >> .env &&
+echo "KIBANA_PASSWORD=MY_SECRET_KIBANA_PASS" >> .env
 ```
 
 ### **Запуск с локальной LLM**
 ```bash
-echo "LLM_PROVIDER='local'" >> .env &&
-docker-compose -f docker-compose.prod.yaml --profile llm-local up --pull always -d 
+echo "LLM_PROVIDER=local" >> .env &&
+docker-compose -f docker-compose.prod.yaml --profile llm-local up --pull always -d
 ```
 
 ### **Запуск с LLM по API**
