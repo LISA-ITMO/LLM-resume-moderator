@@ -10,3 +10,4 @@ python-dotenv==1.0.1
 sentence-transformers==3.4.1
 llama-index==0.12.17
 docx2txt==0.8
+requests==2.32.4
