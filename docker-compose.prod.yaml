@@ -22,7 +22,7 @@ services:
       start_period: 10s
 
   llm-service:
-    image: toponedevopssng/llm-service:1.1
+    image: toponedevopssng/llm-service:latest
     networks:
       - app-network
     profiles:
