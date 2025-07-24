@@ -14,7 +14,7 @@ client = AsyncOpenAI(
     base_url=PROVIDER_URL,
     http_client=AsyncClient(
         proxy=None,
-        timeout=240.0
+        timeout=600
     )
 )
 
