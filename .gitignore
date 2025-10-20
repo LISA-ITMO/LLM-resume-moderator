@@ -4,3 +4,4 @@ data/resume_sql_dumps
 __pycache__/
 venv/
 *.gguf
+data/resumes/

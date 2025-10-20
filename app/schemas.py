@@ -66,7 +66,6 @@ class Education(BaseModel):
     institutionName: str
 
 
-
 class HigherEducation(Education):
     specialty: str
     level: str
