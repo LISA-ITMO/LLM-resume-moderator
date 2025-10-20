@@ -3,8 +3,7 @@ pandas==2.2.3
 sqlalchemy==2.0.37
 seaborn==0.13.2
 transformers==4.48.0
-torch==2.5.1
-tf_keras==2.18.0
+torch==2.6.0
 accelerate==0.26.0
 python-dotenv==1.0.1
 sentence-transformers==3.4.1
