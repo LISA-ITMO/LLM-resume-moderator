@@ -2,5 +2,5 @@ python-dotenv==1.0.1
 openai==1.66.3
 uvicorn==0.22.0
 fastapi==0.115.5
-pydantic==2.8.0
+pydantic==2.11.5
 elasticsearch==8.9.0
