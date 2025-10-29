@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from config import DEFAULT_MODERATOR
 
 import json
 from typing import List, Optional
@@ -26,31 +25,18 @@ class ViolatedRule(BaseModel):
     resume_fragment: str
 
 
-class ModeratorResponse(BaseModel):
+class SelectionResponse(BaseModel):
     status: ModerationStatus
     violated_rules: List[ViolatedRule]
 
 
 class ResponseWithReasoning(BaseModel):
     reasoning: str
-    result: ModeratorResponse
-
-
-class Resume(BaseModel):
-    experience: str
-    job_title: str
-    education: str
-    additional_education: str
+    result: SelectionResponse
 
 
 class ModerationModel(str, Enum):
     T_it_1_0 = 'T_it_1_0'
-
-
-class ModerationContext(BaseModel):
-    rules: List[Rule] | None = DEFAULT_RULES
-    moderation_model: ModerationModel | None
-    resume: Resume
 
 
 class Reletive(BaseModel):
@@ -152,4 +138,5 @@ class ResumeToGovernment(BaseModel):
 
 class SelectionContext(BaseModel):
     rules: List[Rule] = Field(default=DEFAULT_RULES, description="Список правил на которые нужно проверить резюме", example=DEFAULT_RULES)
-    resume: ResumeToGovernment
+    resume: ResumeToGovernment = Field(..., description="Резюме которое нужно проверить")
+    moderation_model: Optional[ModerationModel] = Field(..., description="LLM модель которая будет проверять резюме на соответствие правилам", example=ModerationModel.T_it_1_0)

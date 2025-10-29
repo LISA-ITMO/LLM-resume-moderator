@@ -2,7 +2,8 @@ from openai import AsyncOpenAI
 from httpx import AsyncClient
 
 from config import MLP_API_KEY, DEFAULT_MODERATOR, PROMPT, PROVIDER_URL, MODELS_DICT
-from schemas import Rule, ResponseWithReasoning, Resume, DEFAULT_RULES
+from schemas import Rule, ResponseWithReasoning, ResumeToGovernment, DEFAULT_RULES
+from resume_text_converter import resume_to_text
 
 from typing import List
 import json
@@ -35,7 +36,7 @@ def parse_answer(response_str: str) -> ResponseWithReasoning:
     return ResponseWithReasoning.model_validate({"reasoning": reasoning, "result": result_dict})
 
 
-async def moderate(resume: Resume, rules: List[Rule]=None, moderator_model: str=None) -> ResponseWithReasoning:
+async def moderate(resume: ResumeToGovernment, rules: List[Rule]=None, moderator_model: str=None) -> ResponseWithReasoning:
     if rules is None:
         rules = DEFAULT_RULES
     
@@ -44,7 +45,7 @@ async def moderate(resume: Resume, rules: List[Rule]=None, moderator_model: str=
     else:
         provider_model_name = MODELS_DICT[moderator_model.name]
 
-    resume_text = 'Опыт работы: ' + resume.experience + '\n' + 'Желаемая должность: ' + resume.job_title + '\n' + 'Образование: ' + resume.additional_education + '\n' + 'ДПО: ' + resume.additional_education
+    resume_text = resume_to_text(resume=resume)
 
     formatted_prompt = PROMPT.replace('{rules}', '\n'.join([rule.model_dump_json() for rule in rules])).replace('{resume_text}', resume_text)
 
