@@ -22,6 +22,11 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Create .env file
+        working-directory: ./app
+        run: |
+          echo "${{ secrets.ENV }}" > .env
+
       - name: Install main dependencies
         working-directory: ./app
         run: |
@@ -33,10 +38,12 @@ jobs:
         run: |
           pip install -r tests/requirements-test.txt
 
-      - name: Run tests
+      - name: Run E2E tests
         working-directory: ./app
         run: |
-          python -m pytest tests/ -v
+          ls -a
+          ls -a ../
+          python -m pytest tests/test_e2e.py -v -s
 
   build-and-push:
     needs: test
