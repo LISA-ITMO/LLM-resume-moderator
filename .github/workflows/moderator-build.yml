@@ -41,8 +41,6 @@ jobs:
       - name: Run E2E tests
         working-directory: ./app
         run: |
-          ls -a
-          ls -a ../
           python -m pytest tests/test_e2e.py -v -s
 
   build-and-push:
