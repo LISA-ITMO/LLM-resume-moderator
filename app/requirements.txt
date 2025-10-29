@@ -4,3 +4,4 @@ uvicorn==0.22.0
 fastapi==0.115.5
 pydantic==2.11.5
 elasticsearch==8.9.0
+requests==2.32.4
