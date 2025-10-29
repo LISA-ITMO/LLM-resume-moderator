@@ -33,6 +33,10 @@ class SelectionResponse(BaseModel):
 class ResponseWithReasoning(BaseModel):
     reasoning: str
     result: SelectionResponse
+    
+    
+class FinalResponse(ResponseWithReasoning):
+    time_ms: int
 
 
 class ModerationModel(str, Enum):
