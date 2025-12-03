@@ -37,6 +37,7 @@ class ResponseWithReasoning(BaseModel):
     
 class FinalResponse(ResponseWithReasoning):
     time_ms: int
+    doc_scan_answer : str
 
 
 class ModerationModel(str, Enum):
@@ -144,3 +145,4 @@ class SelectionContext(BaseModel):
     rules: List[Rule] = Field(default=DEFAULT_RULES, description="Список правил на которые нужно проверить резюме", example=DEFAULT_RULES)
     resume: ResumeToGovernment = Field(..., description="Резюме которое нужно проверить")
     moderation_model: Optional[ModerationModel] = Field(..., description="LLM модель которая будет проверять резюме на соответствие правилам", example=ModerationModel.T_it_1_0)
+    filename: str = 'Diploma.pdf'
