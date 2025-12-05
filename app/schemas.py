@@ -16,7 +16,7 @@ class Rule(BaseModel):
     condition: str
 
 
-DEFAULT_RULES = [Rule(**rule) for rule in json.load(open('resume_rules.json'))]
+DEFAULT_RULES = [Rule(**rule) for rule in json.load(open('resume_rules.json', encoding='utf-8'))]
 
 
 class ViolatedRule(BaseModel):
@@ -33,10 +33,19 @@ class SelectionResponse(BaseModel):
 class ResponseWithReasoning(BaseModel):
     reasoning: str
     result: SelectionResponse
-    
-    
+
+
 class FinalResponse(ResponseWithReasoning):
     time_ms: int
+    specialties_check: List = Field(default_factory=list, description="Результаты проверки специальностей")
+
+
+class SpecialtyResult(BaseModel):
+    original_text: str
+    code: Optional[str] = None
+    name: Optional[str] = None
+    found: bool = False
+    matched_name: Optional[str] = None
 
 
 class ModerationModel(str, Enum):
