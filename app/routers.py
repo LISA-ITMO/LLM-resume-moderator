@@ -13,7 +13,7 @@ router = APIRouter(prefix='/moderator',
 async def reserve_selection(selection_context: SelectionContext) -> FinalResponse:
     start_time = time.perf_counter()
 
-    moderation_result = await moderate(
+    moderation_result, specialties_check = await moderate(
         resume=selection_context.resume,
         rules=selection_context.rules,
         moderator_model=selection_context.moderation_model
@@ -25,5 +25,6 @@ async def reserve_selection(selection_context: SelectionContext) -> FinalRespons
     return FinalResponse(
         reasoning=moderation_result.reasoning,
         result=moderation_result.result,
-        time_ms=time_ms
+        time_ms=time_ms,
+        specialties_check=specialties_check
     )
