@@ -1,11 +1,15 @@
 from openai import AsyncOpenAI
 from httpx import AsyncClient
+import os
+from pathlib import Path
 
 from config import MLP_API_KEY, DEFAULT_MODERATOR, PROMPT, PROVIDER_URL, MODELS_DICT
-from schemas import Rule, ResponseWithReasoning, ResumeToGovernment, DEFAULT_RULES
+from schemas import Rule, ResponseWithReasoning, ResumeToGovernment, DEFAULT_RULES, FinalResponse, SpecialtyResult
 from resume_text_converter import resume_to_text
 
-from typing import List
+from agent import agent_normalizer
+
+from typing import List, Tuple
 import json
 import re
 
@@ -36,10 +40,29 @@ def parse_answer(response_str: str) -> ResponseWithReasoning:
     return ResponseWithReasoning.model_validate({"reasoning": reasoning, "result": result_dict})
 
 
-async def moderate(resume: ResumeToGovernment, rules: List[Rule]=None, moderator_model: str=None) -> ResponseWithReasoning:
+async def check_resume_specialties(resume: ResumeToGovernment) -> List[SpecialtyResult]:
+    """Проверяет специальности из резюме через агент нормализации"""
+    specialties_results = []
+    project_root = Path(__file__).parent.parent
+    specialties_path = project_root / "data" / "specialties_reference_test.txt"
+
+    if resume.education and resume.education.higherEducation:
+        for edu in resume.education.higherEducation:
+            if edu.specialty:
+                specialty_result = await agent_normalizer(
+                    specialty=edu.specialty,
+                    api_key=MLP_API_KEY,
+                    specialties_path=str(specialties_path)
+                )
+                specialties_results.append(specialty_result)
+
+    return specialties_results
+
+
+async def moderate(resume: ResumeToGovernment, rules: List[Rule]=None, moderator_model: str=None) -> Tuple[ResponseWithReasoning, List[SpecialtyResult]]:
     if rules is None:
         rules = DEFAULT_RULES
-    
+
     if moderator_model is None:
         provider_model_name = MODELS_DICT[DEFAULT_MODERATOR]
     else:
@@ -58,7 +81,12 @@ async def moderate(resume: ResumeToGovernment, rules: List[Rule]=None, moderator
         ],
         model=provider_model_name,
     )
-    
-    answer_content = completion.choices[0].message.content
 
-    return parse_answer(answer_content)
+    answer_content = completion.choices[0].message.content
+    parse_answer_result = parse_answer(answer_content)
+
+    specialties_check = await check_resume_specialties(resume)
+
+    return parse_answer_result, specialties_check
+
+
