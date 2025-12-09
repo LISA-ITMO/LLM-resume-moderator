@@ -16,7 +16,7 @@ class Rule(BaseModel):
     condition: str
 
 
-DEFAULT_RULES = [Rule(**rule) for rule in json.load(open('resume_rules.json'))]
+DEFAULT_RULES = [Rule(**rule) for rule in json.load(open('resume_rules.json', encoding='utf-8'))]
 
 
 class ViolatedRule(BaseModel):
