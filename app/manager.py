@@ -1,24 +1,22 @@
 import json
-import os
 import re
 from pathlib import Path
 from typing import List, Tuple
 
 from agent import agent_normalizer
-from config import DEFAULT_MODERATOR, MLP_API_KEY, MODELS_DICT, PROMPT, PROVIDER_URL
+from config import (DEFAULT_MODERATOR, MLP_API_KEY, MODELS_DICT, PROMPT,
+                    PROVIDER_URL)
 from httpx import AsyncClient
 from openai import AsyncOpenAI
 from resume_text_converter import resume_to_text
-from schemas import (
-    DEFAULT_RULES,
-    FinalResponse,
-    ResponseWithReasoning,
-    ResumeToGovernment,
-    Rule,
-    SpecialtyResult,
-)
+from schemas import (DEFAULT_RULES, ResponseWithReasoning, ResumeToGovernment,
+                     Rule, SpecialtyResult)
 
-client = AsyncOpenAI(api_key=MLP_API_KEY, base_url=PROVIDER_URL, http_client=AsyncClient(proxy=None, timeout=600))
+client = AsyncOpenAI(
+    api_key=MLP_API_KEY,
+    base_url=PROVIDER_URL,
+    http_client=AsyncClient(proxy=None, timeout=600),
+)
 
 
 def parse_answer(response_str: str) -> ResponseWithReasoning:
@@ -34,7 +32,9 @@ def parse_answer(response_str: str) -> ResponseWithReasoning:
     except json.JSONDecodeError:
         result_dict = {"error": "Invalid JSON format"}
 
-    return ResponseWithReasoning.model_validate({"reasoning": reasoning, "result": result_dict})
+    return ResponseWithReasoning.model_validate(
+        {"reasoning": reasoning, "result": result_dict}
+    )
 
 
 async def check_resume_specialties(resume: ResumeToGovernment) -> List[SpecialtyResult]:
@@ -47,7 +47,9 @@ async def check_resume_specialties(resume: ResumeToGovernment) -> List[Specialty
         for edu in resume.education.higherEducation:
             if edu.specialty:
                 specialty_result = await agent_normalizer(
-                    specialty=edu.specialty, api_key=MLP_API_KEY, specialties_path=str(specialties_path)
+                    specialty=edu.specialty,
+                    api_key=MLP_API_KEY,
+                    specialties_path=str(specialties_path),
                 )
                 specialties_results.append(specialty_result)
 
@@ -67,9 +69,9 @@ async def moderate(
 
     resume_text = resume_to_text(resume=resume)
 
-    formatted_prompt = PROMPT.replace("{rules}", "\n".join([rule.model_dump_json() for rule in rules])).replace(
-        "{resume_text}", resume_text
-    )
+    formatted_prompt = PROMPT.replace(
+        "{rules}", "\n".join([rule.model_dump_json() for rule in rules])
+    ).replace("{resume_text}", resume_text)
 
     completion = await client.chat.completions.create(
         messages=[{"role": "user", "content": formatted_prompt}],

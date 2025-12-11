@@ -12,7 +12,9 @@ async def reserve_selection(selection_context: SelectionContext) -> FinalRespons
     start_time = time.perf_counter()
 
     moderation_result, specialties_check = await moderate(
-        resume=selection_context.resume, rules=selection_context.rules, moderator_model=selection_context.moderation_model
+        resume=selection_context.resume,
+        rules=selection_context.rules,
+        moderator_model=selection_context.moderation_model,
     )
 
     end_time = time.perf_counter()

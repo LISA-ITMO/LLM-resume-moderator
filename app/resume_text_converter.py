@@ -63,10 +63,16 @@ def resume_to_text(resume: ResumeToGovernment) -> str:
 
             if relative_info:
                 relatives_section.append(
-                    f"{i}. " + "\n   ".join([relative_info[0]] + [f"   {line}" for line in relative_info[1:]])
+                    f"{i}. "
+                    + "\n   ".join(
+                        [relative_info[0]]
+                        + [f"   {line}" for line in relative_info[1:]]
+                    )
                 )
 
-        if len(relatives_section) > 1:  # Если есть хотя бы один родственник с информацией
+        if (
+            len(relatives_section) > 1
+        ):  # Если есть хотя бы один родственник с информацией
             sections.append("\n".join(relatives_section))
 
     # Образование
@@ -89,9 +95,15 @@ def resume_to_text(resume: ResumeToGovernment) -> str:
             if not is_empty_value(edu.year):
                 edu_info.append(f"Год обучения: {edu.year}")
             if not is_empty_value(edu.haveDiploma):
-                edu_info.append(f"Наличие диплома: {'Да' if edu.haveDiploma else 'Нет'}")
-            if not is_empty_value(edu.dateOfAdmission) and not is_empty_value(edu.dateOfGraduation):
-                edu_info.append(f"Период: {edu.dateOfAdmission} - {edu.dateOfGraduation}")
+                edu_info.append(
+                    f"Наличие диплома: {'Да' if edu.haveDiploma else 'Нет'}"
+                )
+            if not is_empty_value(edu.dateOfAdmission) and not is_empty_value(
+                edu.dateOfGraduation
+            ):
+                edu_info.append(
+                    f"Период: {edu.dateOfAdmission} - {edu.dateOfGraduation}"
+                )
             elif not is_empty_value(edu.dateOfAdmission):
                 edu_info.append(f"Дата поступления: {edu.dateOfAdmission}")
             elif not is_empty_value(edu.dateOfGraduation):
@@ -117,8 +129,12 @@ def resume_to_text(resume: ResumeToGovernment) -> str:
                 edu_info.append(f"Вид программы: {edu.programType}")
             if not is_empty_value(edu.hoursИumber):
                 edu_info.append(f"Количество часов: {edu.hoursИumber}")
-            if not is_empty_value(edu.dateOfAdmission) and not is_empty_value(edu.dateOfGraduation):
-                edu_info.append(f"Период: {edu.dateOfAdmission} - {edu.dateOfGraduation}")
+            if not is_empty_value(edu.dateOfAdmission) and not is_empty_value(
+                edu.dateOfGraduation
+            ):
+                edu_info.append(
+                    f"Период: {edu.dateOfAdmission} - {edu.dateOfGraduation}"
+                )
             elif not is_empty_value(edu.dateOfAdmission):
                 edu_info.append(f"Дата поступления: {edu.dateOfAdmission}")
             elif not is_empty_value(edu.dateOfGraduation):
@@ -144,8 +160,12 @@ def resume_to_text(resume: ResumeToGovernment) -> str:
                 edu_info.append(f"Ученая степень: {edu.degree}")
             if not is_empty_value(edu.scienceBranch):
                 edu_info.append(f"Отрасль наук: {edu.scienceBranch}")
-            if not is_empty_value(edu.dateOfAdmission) and not is_empty_value(edu.dateOfGraduation):
-                edu_info.append(f"Период: {edu.dateOfAdmission} - {edu.dateOfGraduation}")
+            if not is_empty_value(edu.dateOfAdmission) and not is_empty_value(
+                edu.dateOfGraduation
+            ):
+                edu_info.append(
+                    f"Период: {edu.dateOfAdmission} - {edu.dateOfGraduation}"
+                )
             elif not is_empty_value(edu.dateOfAdmission):
                 edu_info.append(f"Дата поступления: {edu.dateOfAdmission}")
             elif not is_empty_value(edu.dateOfGraduation):
@@ -206,7 +226,9 @@ def resume_to_text(resume: ResumeToGovernment) -> str:
     # Публикации
     if not is_empty_value(resume.publications):
         publications_section = ["НАУЧНЫЕ ТРУДЫ И ПУБЛИКАЦИИ"]
-        valid_publications = [pub for pub in resume.publications if not is_empty_value(pub)]
+        valid_publications = [
+            pub for pub in resume.publications if not is_empty_value(pub)
+        ]
 
         for i, pub in enumerate(valid_publications, 1):
             publications_section.append(f"{i}. {pub}")
@@ -228,7 +250,9 @@ def resume_to_text(resume: ResumeToGovernment) -> str:
     # Военная служба
     military_info = []
     if not is_empty_value(resume.militaryLiable):
-        military_info.append(f"Военнообязанный: {'Да' if resume.militaryLiable else 'Нет'}")
+        military_info.append(
+            f"Военнообязанный: {'Да' if resume.militaryLiable else 'Нет'}"
+        )
     if not is_empty_value(resume.militaryСategory):
         military_info.append(f"Годность: {resume.militaryСategory}")
 
@@ -239,15 +263,21 @@ def resume_to_text(resume: ResumeToGovernment) -> str:
     additional_info_sections = []
 
     if not is_empty_value(resume.professionalInterests):
-        additional_info_sections.append(f"Сфера профессиональных интересов: {resume.professionalInterests}")
+        additional_info_sections.append(
+            f"Сфера профессиональных интересов: {resume.professionalInterests}"
+        )
     if not is_empty_value(resume.additionalInfo):
         additional_info_sections.append(f"О себе: {resume.additionalInfo}")
     if not is_empty_value(resume.motivation):
         additional_info_sections.append(f"Мотивация: {resume.motivation}")
     if not is_empty_value(resume.source):
-        additional_info_sections.append(f"Источник информации о резерве: {resume.source}")
+        additional_info_sections.append(
+            f"Источник информации о резерве: {resume.source}"
+        )
 
     if additional_info_sections:
-        sections.append("ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ\n" + "\n".join(additional_info_sections))
+        sections.append(
+            "ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ\n" + "\n".join(additional_info_sections)
+        )
 
     return "\n\n".join(sections)

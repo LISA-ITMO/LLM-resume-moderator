@@ -10,7 +10,12 @@ def kill_port(port: int):
         else:
             netstat_args = "-tulpn"
 
-        result = subprocess.run(["netstat", netstat_args], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result = subprocess.run(
+            ["netstat", netstat_args],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
 
         lines = result.stdout.splitlines()
         pid_to_kill = None

@@ -7,13 +7,19 @@ from elasticsearch import Elasticsearch
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-es = Elasticsearch("http://localhost:9200", basic_auth=("elastic", ELASTIC_PASSWORD), verify_certs=False)
+es = Elasticsearch(
+    "http://localhost:9200",
+    basic_auth=("elastic", ELASTIC_PASSWORD),
+    verify_certs=False,
+)
 
 
 class ElasticsearchHandler(logging.Handler):
     def emit(self, record):
         try:
-            timestamp = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(record.created))
+            timestamp = time.strftime(
+                "%Y-%m-%dT%H:%M:%S", time.localtime(record.created)
+            )
 
             log_entry = {
                 "@timestamp": timestamp,
@@ -36,7 +42,9 @@ class ElasticsearchHandler(logging.Handler):
 logger = logging.getLogger("api")
 logger.setLevel(logging.INFO)
 
-formatter = logging.Formatter(fmt="%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+formatter = logging.Formatter(
+    fmt="%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+)
 
 es_handler = ElasticsearchHandler()
 es_handler.setFormatter(formatter)
@@ -67,7 +75,13 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
         except Exception as e:
-            log_data.update({"status": 500, "response_body": str(e), "duration": time.time() - start_time})
+            log_data.update(
+                {
+                    "status": 500,
+                    "response_body": str(e),
+                    "duration": time.time() - start_time,
+                }
+            )
             logger.error("Request error", extra=log_data)
             raise
 

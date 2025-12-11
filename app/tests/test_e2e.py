@@ -10,7 +10,9 @@ import requests
 def app_server() -> Generator[None, None, None]:
     """Запускает FastAPI приложение и останавливает его после тестов"""
     # Запускаем приложение
-    process = subprocess.Popen(["python", "main.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(
+        ["python", "main.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
 
     # Даем время на запуск сервера
     time.sleep(3)
@@ -97,7 +99,13 @@ def test_reserve_selection_success(app_server):
                 ],
             },
             "languges": [{"name": "Английский", "level": "SpeakFluently"}],
-            "softwareSkills": [{"type": "Текстовые редакторы", "nameOfProduct": "Microsoft Word", "level": "Fluent"}],
+            "softwareSkills": [
+                {
+                    "type": "Текстовые редакторы",
+                    "nameOfProduct": "Microsoft Word",
+                    "level": "Fluent",
+                }
+            ],
             "publications": ["Применение ML в госуправлении"],
             "awards": ["Премия губернатора за успехи в учебе"],
             "militaryLiable": True,
@@ -111,7 +119,11 @@ def test_reserve_selection_success(app_server):
     }
 
     # Отправляем POST запрос
-    response = requests.post("http://localhost:8000/moderator/reserve/selection", json=request_body, timeout=60)
+    response = requests.post(
+        "http://localhost:8000/moderator/reserve/selection",
+        json=request_body,
+        timeout=60,
+    )
 
     # Проверяем статус код
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
@@ -131,17 +143,25 @@ def test_reserve_selection_success(app_server):
 
     # Проверяем структуру result
     assert "status" in data["result"], "Field 'status' is missing in result"
-    assert "violated_rules" in data["result"], "Field 'violated_rules' is missing in result"
+    assert (
+        "violated_rules" in data["result"]
+    ), "Field 'violated_rules' is missing in result"
 
     # Проверяем значения
-    assert data["result"]["status"] == "OK", f"Expected status 'OK', got '{data['result']['status']}'"
-    assert isinstance(data["result"]["violated_rules"], list), "Field 'violated_rules' must be a list"
-    assert len(data["result"]["violated_rules"]) == 0, f"Expected empty violated_rules, got {data['result']['violated_rules']}"
+    assert (
+        data["result"]["status"] == "OK"
+    ), f"Expected status 'OK', got '{data['result']['status']}'"
+    assert isinstance(
+        data["result"]["violated_rules"], list
+    ), "Field 'violated_rules' must be a list"
+    assert (
+        len(data["result"]["violated_rules"]) == 0
+    ), f"Expected empty violated_rules, got {data['result']['violated_rules']}"
 
     # Проверяем, что time_ms положительное число
     assert data["time_ms"] > 0, f"Expected positive time_ms, got {data['time_ms']}"
 
-    print(f"\n✓ Test passed successfully!")
+    print("\n✓ Test passed successfully!")
     print(f"  - Reasoning length: {len(data['reasoning'])} chars")
     print(f"  - Status: {data['result']['status']}")
     print(f"  - Violated rules: {data['result']['violated_rules']}")

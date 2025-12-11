@@ -27,7 +27,9 @@ class SpecialtyNormalizer:
         result = self._parse_with_regex(raw_text)
 
         if result:
-            return Specialty(original_text=raw_text, code=result["code"], name=result["name"])
+            return Specialty(
+                original_text=raw_text, code=result["code"], name=result["name"]
+            )
 
         return await self._normalize_with_llm(raw_text)
 
@@ -85,14 +87,14 @@ class SpecialtyNormalizer:
         Извлеки код и название специальности из текста: "{raw_text}"
 
         Правила:
-        - Если есть несколько кодов, бери ПЕРВЫЙ 
+        - Если есть несколько кодов, бери ПЕРВЫЙ
         - Название: только слова, без кодов
         - Если код или название не найдены, используй null
 
         Верни JSON:
         {{
             "code": "код или null",
-            "name": "название или null", 
+            "name": "название или null",
         }}
         """
 
@@ -107,7 +109,7 @@ class SpecialtyNormalizer:
                     code=data.get("code"),
                     name=data.get("name"),
                 )
-        except:
+        except BaseException:
             pass
 
         return self._create_fallback(original_text)
@@ -154,7 +156,9 @@ class SpecialtyMatcher:
         return None
 
 
-async def agent_normalizer(specialty: str, api_key: str, specialties_path) -> SpecialtyResult:
+async def agent_normalizer(
+    specialty: str, api_key: str, specialties_path
+) -> SpecialtyResult:
     """Нормализует специальность и проверяет её в перечне
     Args:
         specialty: Специальность которую ввел пользователь
