@@ -1,14 +1,11 @@
 import uvicorn
-from fastapi import FastAPI
-
-from utils import kill_port
 from config import FASTAPI_PORT
-from routers import router as moderation_router
+from fastapi import FastAPI
 from logger import LoggingMiddleware
+from routers import router as moderation_router
+from utils import kill_port
 
-
-app = FastAPI(title='LLM Resume Moderator API',
-              description='Here is LLM Resume Moderator fastapi backend')
+app = FastAPI(title="LLM Resume Moderator API", description="Here is LLM Resume Moderator fastapi backend")
 
 app.include_router(moderation_router)
 app.add_middleware(LoggingMiddleware)

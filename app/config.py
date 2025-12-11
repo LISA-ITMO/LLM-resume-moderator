@@ -1,36 +1,31 @@
-from dotenv import load_dotenv
-
 import os
 
+from dotenv import load_dotenv
 
 load_dotenv("../.env")
 load_dotenv(".env")
 
-ELASTIC_PASSWORD = os.environ.get('ELASTIC_PASSWORD')
+ELASTIC_PASSWORD = os.environ.get("ELASTIC_PASSWORD")
 
 llm_providers = {
-    'local': {
-        'PROVIDER_URL': 'http://llm-service:8000/v1',
-        'MLP_API_KEY': 'sk-no-key-required',
-        'models': {
-            'T_it_1_0': 't-lite-it-1.0-q8_0.gguf'
-            }
-        },
-    'caila.io': {
-        'PROVIDER_URL': 'https://caila.io/api/adapters/openai',
-        'MLP_API_KEY': os.environ.get('MLP_API_KEY'),
-        'models': {
-            'T_it_1_0': 'just-ai/t-tech-T-pro-it-1.0'
-            }
-        }
+    "local": {
+        "PROVIDER_URL": "http://llm-service:8000/v1",
+        "MLP_API_KEY": "sk-no-key-required",
+        "models": {"T_it_1_0": "t-lite-it-1.0-q8_0.gguf"},
+    },
+    "caila.io": {
+        "PROVIDER_URL": "https://caila.io/api/adapters/openai",
+        "MLP_API_KEY": os.environ.get("MLP_API_KEY"),
+        "models": {"T_it_1_0": "just-ai/t-tech-T-pro-it-1.0"},
+    },
 }
 
-LLM_PROVIDER = os.environ.get('LLM_PROVIDER')
-PROVIDER_URL = llm_providers[LLM_PROVIDER]['PROVIDER_URL']
-MLP_API_KEY = llm_providers[LLM_PROVIDER]['MLP_API_KEY']
-MODELS_DICT = llm_providers[LLM_PROVIDER]['models']
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER")
+PROVIDER_URL = llm_providers[LLM_PROVIDER]["PROVIDER_URL"]
+MLP_API_KEY = llm_providers[LLM_PROVIDER]["MLP_API_KEY"]
+MODELS_DICT = llm_providers[LLM_PROVIDER]["models"]
 
-DEFAULT_MODERATOR = 'T_it_1_0'
+DEFAULT_MODERATOR = "T_it_1_0"
 
 PROMPT = """
 Ты — ИИ-модератор резюме. Проверь текст резюме на соответствие следующим правилам. Если есть нарушения, верни JSON-объект с типом нарушения и фрагментом текста, который нарушает правило. Если нарушений нет, верни статус "OK".
