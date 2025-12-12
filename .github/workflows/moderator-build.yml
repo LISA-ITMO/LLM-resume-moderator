@@ -24,11 +24,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Debug structure
-        run: |
-          echo "Current directory structure:"
-          pwd
-          ls -la
       - name: Install linting tools
         working-directory: ./app
         run: |
@@ -38,17 +33,17 @@ jobs:
       - name: Run flake8 (PEP8 compliance)
         working-directory: ./app
         run: |
-          flake8 app/ --count --max-line-length=511 --ignore=E203,W503 --show-source --statistics
+          flake8 ./app --count --max-line-length=511 --ignore=E203,W503 --show-source --statistics
 
       - name: Check formatting with black
         working-directory: ./app
         run: |
-          black --check --diff app/
+          black --check --diff ./app
 
       - name: Check imports with isort
         working-directory: ./app
         run: |
-          isort --check-only --diff app/
+          isort --check-only --diff ./app
   test:
     runs-on: ubuntu-latest
     steps:
