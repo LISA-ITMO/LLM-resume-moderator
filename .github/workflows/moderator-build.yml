@@ -24,7 +24,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
+      - name: Debug structure
+        run: |
+          echo "Current directory structure:"
+          pwd
+          ls -la
       - name: Install linting tools
         working-directory: ./app
         run: |
