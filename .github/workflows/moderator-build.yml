@@ -43,7 +43,7 @@ jobs:
       - name: Check imports with isort
         working-directory: ./app
         run: |
-          isort --check-only --diff .
+          isort --check-only --diff . --profile black
   test:
     runs-on: ubuntu-latest
     steps:

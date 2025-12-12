@@ -4,13 +4,17 @@ from pathlib import Path
 from typing import List, Tuple
 
 from agent import agent_normalizer
-from config import (DEFAULT_MODERATOR, MLP_API_KEY, MODELS_DICT, PROMPT,
-                    PROVIDER_URL)
+from config import DEFAULT_MODERATOR, MLP_API_KEY, MODELS_DICT, PROMPT, PROVIDER_URL
 from httpx import AsyncClient
 from openai import AsyncOpenAI
 from resume_text_converter import resume_to_text
-from schemas import (DEFAULT_RULES, ResponseWithReasoning, ResumeToGovernment,
-                     Rule, SpecialtyResult)
+from schemas import (
+    DEFAULT_RULES,
+    ResponseWithReasoning,
+    ResumeToGovernment,
+    Rule,
+    SpecialtyResult,
+)
 
 client = AsyncOpenAI(
     api_key=MLP_API_KEY,
