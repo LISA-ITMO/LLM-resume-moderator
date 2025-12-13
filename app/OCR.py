@@ -1,67 +1,76 @@
 import pdf2image
-from paddleocr import PPStructureV3
-from collections import defaultdict
+from paddleocr import PaddleOCR
+
 import re
+import logging
+import os
+import glob
+
 from slovar import uni_spec
-from pydantic import BaseModel
-
-class Doc(BaseModel):
-    type : str = ''
-    code : str = '-1'
-    name : str = '-1'
-
-def define_spec(uni_spec, cifr_spec):
-    return uni_spec[cifr_spec]
-
-def define_doc(filename) -> Doc:
-    answer = Doc()
-    pdf_document = filename
-    pages = pdf2image.convert_from_path(pdf_document, dpi=200)
-    for i, image in enumerate(pages):
-        image.save(f"page_{i+1}.jpg", "JPEG")
+from schemas import Doc, EducationDocType
+from config import STORAGE_DIR
 
 
-    pipeline = PPStructureV3(
-        lang='ru',  # или 'cyrillic'
-        device='cpu'
-    )
+class OCRService():
 
-    data = defaultdict(str)
+    def __init__(self):
+        self.pipeline = PaddleOCR(
+            text_detection_model_name="PP-OCRv5_mobile_det",
+            text_recognition_model_name="cyrillic_PP-OCRv5_mobile_rec",
+            use_doc_orientation_classify=True,
+            use_doc_unwarping=True,
+            lang='ru',
+            use_textline_orientation=False,
+        )
+        self.logger = logging.getLogger(name=__name__)
 
-    text = ''
-    for ind in range(len(pages)):
-        result = pipeline.predict(f"page_{ind+1}.jpg")
-        data_page = result[0]
-        parsing_list = data_page['parsing_res_list']
-        all_content = []
-        for block in parsing_list:
-            content_text = block.content
-            if content_text:
-                cleaned_text = content_text.strip()
-                if cleaned_text:
-                    all_content.append(cleaned_text)
+    def define_spec(self, uni_spec, cifr_spec):
+        return uni_spec[cifr_spec]
+    
 
-        for block in all_content:
-            text += block
+    def define_doc(self, filename) -> Doc:
+        answer = Doc(type=EducationDocType.OTHER)
+        text_parts = []
+        try:
+            filename_stem = filename.split(".")[0]
+            pdf_document = f"{STORAGE_DIR}/{filename}"
+            pages = pdf2image.convert_from_path(pdf_document, dpi=200)
+            for i, image in enumerate(pages):
+                image.save(f"{STORAGE_DIR}/{filename_stem}_page_{i+1}.jpg", "JPEG")
+            for ind in range(len(pages)):
+                result = self.pipeline.predict(f"{STORAGE_DIR}/{filename_stem}_page_{ind+1}.jpg")
+                data_page = result[0]
+                parsing_list = data_page['rec_texts']
+                text_parts.append(" ".join(parsing_list))
+                
+                self.logger.info(f"Отсканирована {ind + 1} страница документа об образовании")
+        except Exception as e:
+            self.logger.error(f"Ошибка при распознавании текста документа об образовании: {e}")
+        finally:
+            pattern = os.path.join(STORAGE_DIR, f"{filename_stem}*")
+            for file_path in glob.glob(pattern):
+                os.remove(file_path)
+        
+        text = "\n\n".join(text_parts)
 
-    #номер направления
-    matches = re.findall(r'\d{2}\.\d{2}\.\d{2}', text)
-    if len(matches) == 0: #не нашел цифры
-        answer.type = 'Ни диплом, ни справка'
+        #номер направления
+        matches = re.findall(r'\d{2}\.\d{2}\.(?!20)\d{2}', text)
+        
+        for el in matches:
+            if el in uni_spec:
+                name_napr = self.define_spec(uni_spec, el)
+                cifr_napr = el
+                break
+        else:
+            return answer
+
+        #определение типа документа
+        if 'справка' in text.lower():
+            answer.type = EducationDocType.HIGHER_EDU_СERT
+        elif 'диплом' in text.lower():
+            answer.type = EducationDocType.DIPLOMA
+        answer.code = cifr_napr
+        answer.name = name_napr
         return answer
-    dictttt = defaultdict(int)
-    for el in matches:
-        dictttt[el] += 1
-    cifr_napr = max(dictttt, key=dictttt.get)
-    name_napr = define_spec(uni_spec, cifr_napr)
 
-    #определение типа документа
-    if 'диплом' in text.lower():
-        answer.type = 'Это диплом'
-    if 'справка' in text.lower():
-        answer.type = 'Это справка'
-    answer.code = f'Код направления: {cifr_napr}'
-    answer.name = f'Название направления: {name_napr}'
-    return answer
-
-print(define_doc('Diploma.pdf'))
+ocr_service = OCRService()

@@ -6,7 +6,8 @@ import os
 load_dotenv("../.env")
 load_dotenv(".env")
 
-ELASTIC_PASSWORD = os.environ.get('ELASTIC_PASSWORD')
+MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 MB
+STORAGE_DIR = "storage"
 
 llm_providers = {
     'local': {
