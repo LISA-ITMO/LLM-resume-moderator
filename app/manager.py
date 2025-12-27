@@ -26,6 +26,7 @@ client = AsyncOpenAI(
 
 def parse_answer(response_str: str) -> ResponseWithReasoning:
     parts = response_str.split("Результат:")
+    print(response_str)
     
     reasoning = parts[0].replace("Рассуждения:", "").strip()
 
@@ -84,7 +85,7 @@ async def moderate(resume: ResumeToGovernment, rules: List[Rule]=None, moderator
 
     answer_content = completion.choices[0].message.content
     parse_answer_result = parse_answer(answer_content)
-    
+
     specialties_check = await check_resume_specialties(resume)
 
     return parse_answer_result, specialties_check
