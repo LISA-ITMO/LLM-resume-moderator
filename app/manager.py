@@ -26,6 +26,7 @@ client = AsyncOpenAI(
 
 def parse_answer(response_str: str) -> ResponseWithReasoning:
     parts = response_str.split("Результат:")
+    print(response_str)
     
     reasoning = parts[0].replace("Рассуждения:", "").strip()
 

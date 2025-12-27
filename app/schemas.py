@@ -35,17 +35,38 @@ class ResponseWithReasoning(BaseModel):
     result: SelectionResponse
 
 
-class FinalResponse(ResponseWithReasoning):
-    time_ms: int
-    specialties_check: List = Field(default_factory=list, description="Результаты проверки специальностей")
-
-
 class SpecialtyResult(BaseModel):
     original_text: str
     code: Optional[str] = None
     name: Optional[str] = None
     found: bool = False
     matched_name: Optional[str] = None
+
+
+class EducationDocType(str, Enum):
+    DIPLOMA = "Diploma" # Диплом о высшем образовании
+    HIGHER_EDU_СERT = "HIGHER_EDU_СERT" # Справка о получении высшего образования
+    OTHER = "Other" # Другой документ
+
+
+class Doc(BaseModel):
+    type: EducationDocType
+    code: str | None = None
+    name: str | None = None
+
+
+class FinalResponse(ResponseWithReasoning):
+    time_ms: int
+    doc_scan_answer : Doc
+
+
+class UploadFileResponse(BaseModel):
+    message: str
+    educationFilename: str
+    
+
+class BusynessErrorResponse(BaseModel):
+    message: str
 
 
 class ModerationModel(str, Enum):
@@ -153,3 +174,4 @@ class SelectionContext(BaseModel):
     rules: List[Rule] = Field(default=DEFAULT_RULES, description="Список правил на которые нужно проверить резюме", example=DEFAULT_RULES)
     resume: ResumeToGovernment = Field(..., description="Резюме которое нужно проверить")
     moderation_model: Optional[ModerationModel] = Field(..., description="LLM модель которая будет проверять резюме на соответствие правилам", example=ModerationModel.T_it_1_0)
+    educationFilename: str = 'Diploma.pdf'
