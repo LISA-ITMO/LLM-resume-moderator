@@ -1,15 +1,16 @@
-import os
-from pydantic import BaseModel
-from typing import Optional
 import json
+import os
 import re
-from httpx import AsyncClient
+from typing import Optional
 
+from httpx import AsyncClient
+from pydantic import BaseModel
 from schemas import SpecialtyResult
 
 
 class Specialty(BaseModel):
     """pydantic модель для специальности"""
+
     original_text: str
     code: Optional[str] = None
     name: Optional[str] = None
@@ -27,29 +28,27 @@ class SpecialtyNormalizer:
 
         if result:
             return Specialty(
-                original_text=raw_text,
-                code=result["code"],
-                name=result["name"]
+                original_text=raw_text, code=result["code"], name=result["name"]
             )
 
         return await self._normalize_with_llm(raw_text)
 
     def _parse_with_regex(self, text: str) -> Optional[dict]:
         """Парсим регуляками"""
-        code_match = re.search(r'(\d{2}\.\d{2}\.\d{2}|\d{5,})', text)
+        code_match = re.search(r"(\d{2}\.\d{2}\.\d{2}|\d{5,})", text)
         if not code_match:
             return None
 
         code = code_match.group(1)
 
-        digits = code.replace('.', '')
+        digits = code.replace(".", "")
         if len(digits) == 6:
             code = f"{digits[0:2]}.{digits[2:4]}.{digits[4:6]}"
 
-        name = text.replace(code_match.group(1), '', 1)
+        name = text.replace(code_match.group(1), "", 1)
 
-        name = re.sub(r'[;,\(\)]', ' ', name)
-        name = ' '.join(name.split()).strip()
+        name = re.sub(r"[;,\(\)]", " ", name)
+        name = " ".join(name.split()).strip()
 
         if not name or name[0].isdigit():
             return None
@@ -64,16 +63,16 @@ class SpecialtyNormalizer:
             async with AsyncClient(timeout=30) as client:
                 response = await client.post(
                     self.url,
-                    headers={'Authorization': f'Bearer {self.api_key}'},
+                    headers={"Authorization": f"Bearer {self.api_key}"},
                     json={
-                        'model': 'just-ai/t-tech-T-pro-it-1.0',
-                        'messages': [{'role': 'user', 'content': prompt}],
-                        'temperature': 0.1
-                    }
+                        "model": "just-ai/t-tech-T-pro-it-1.0",
+                        "messages": [{"role": "user", "content": prompt}],
+                        "temperature": 0.1,
+                    },
                 )
 
                 if response.status_code == 200:
-                    answer = response.json()['choices'][0]['message']['content']
+                    answer = response.json()["choices"][0]["message"]["content"]
                     return self._parse_response(answer, raw_text)
                 else:
                     return self._create_fallback(raw_text)
@@ -88,29 +87,29 @@ class SpecialtyNormalizer:
         Извлеки код и название специальности из текста: "{raw_text}"
 
         Правила:
-        - Если есть несколько кодов, бери ПЕРВЫЙ 
+        - Если есть несколько кодов, бери ПЕРВЫЙ
         - Название: только слова, без кодов
         - Если код или название не найдены, используй null
 
         Верни JSON:
         {{
             "code": "код или null",
-            "name": "название или null", 
+            "name": "название или null",
         }}
         """
 
     def _parse_response(self, response_text: str, original_text: str) -> Specialty:
         """Парсим ответ от LLM"""
         try:
-            json_match = re.search(r'\{.*?\}', response_text, re.DOTALL)
+            json_match = re.search(r"\{.*?\}", response_text, re.DOTALL)
             if json_match:
                 data = json.loads(json_match.group())
                 return Specialty(
                     original_text=original_text,
-                    code=data.get('code'),
-                    name=data.get('name'),
+                    code=data.get("code"),
+                    name=data.get("name"),
                 )
-        except:
+        except BaseException:
             pass
 
         return self._create_fallback(original_text)
@@ -135,7 +134,7 @@ class SpecialtyMatcher:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Файл перечня {file_path} не найден")
 
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             data = [line.strip() for line in f.readlines() if line.strip()]
 
         return data
@@ -153,15 +152,13 @@ class SpecialtyMatcher:
         """Ищем по коду"""
         for speciality in self.specialties_list:
             if code in speciality:
-                return {
-                    "found": True,
-                    "matched_name": speciality,
-                    "method": "by_code"
-                }
+                return {"found": True, "matched_name": speciality, "method": "by_code"}
         return None
 
 
-async def agent_normalizer(specialty: str, api_key: str, specialties_path) -> SpecialtyResult:
+async def agent_normalizer(
+    specialty: str, api_key: str, specialties_path
+) -> SpecialtyResult:
     """Нормализует специальность и проверяет её в перечне
     Args:
         specialty: Специальность которую ввел пользователь
@@ -182,6 +179,5 @@ async def agent_normalizer(specialty: str, api_key: str, specialties_path) -> Sp
         code=normalized_specialty.code,
         name=normalized_specialty.name,
         found=match_result["found"],
-        matched_name=match_result["matched_name"]
+        matched_name=match_result["matched_name"],
     )
-

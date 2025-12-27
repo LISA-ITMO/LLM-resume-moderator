@@ -1,8 +1,8 @@
 import uvicorn
 from fastapi import FastAPI
 
-from utils import kill_port
 from config import FASTAPI_PORT
+from utils import kill_port
 from routers import router as moderation_router
 from logging_config import setup_logging
 

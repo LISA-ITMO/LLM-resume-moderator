@@ -1,7 +1,6 @@
-from dotenv import load_dotenv
-
 import os
 
+from dotenv import load_dotenv
 
 load_dotenv("../.env")
 load_dotenv(".env")
@@ -26,17 +25,17 @@ llm_providers = {
         }
 }
 
-LLM_PROVIDER = os.environ.get('LLM_PROVIDER')
-PROVIDER_URL = llm_providers[LLM_PROVIDER]['PROVIDER_URL']
-MLP_API_KEY = llm_providers[LLM_PROVIDER]['MLP_API_KEY']
-MODELS_DICT = llm_providers[LLM_PROVIDER]['models']
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER")
+PROVIDER_URL = llm_providers[LLM_PROVIDER]["PROVIDER_URL"]
+MLP_API_KEY = llm_providers[LLM_PROVIDER]["MLP_API_KEY"]
+MODELS_DICT = llm_providers[LLM_PROVIDER]["models"]
 
-DEFAULT_MODERATOR = 'T_it_1_0'
+DEFAULT_MODERATOR = "T_it_1_0"
 
 PROMPT = """
 Ты — ИИ-модератор резюме. Проверь текст резюме на соответствие следующим правилам. Если есть нарушения, верни JSON-объект с типом нарушения и фрагментом текста, который нарушает правило. Если нарушений нет, верни статус "OK".
 
-**Правила:** 
+**Правила:**
 {rules}
 
 **Инструкции:**

@@ -7,11 +7,10 @@ from manager import moderate
 from config import STORAGE_DIR, MAX_FILE_SIZE
 from OCR import ocr_service
 
-import time
 import os
+import time 
 
-router = APIRouter(prefix='/moderator',
-                   tags=['Moderator'])
+router = APIRouter(prefix="/moderator", tags=["Moderator"])
 
 
 @router.post(
@@ -90,7 +89,7 @@ async def reserve_selection(selection_context: SelectionContext):
     moderation_result, speciality_result = await moderate(
         resume=selection_context.resume,
         rules=selection_context.rules,
-        moderator_model=selection_context.moderation_model
+        moderator_model=selection_context.moderation_model,
     )
 
     doc_answer = ocr_service.define_doc(selection_context.educationFilename)
