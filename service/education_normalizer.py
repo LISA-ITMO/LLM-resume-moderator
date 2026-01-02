@@ -1,11 +1,12 @@
 import json
-import os
 import re
-from typing import Optional
+from typing import Optional, List
 
-from httpx import AsyncClient
 from pydantic import BaseModel
-from schemas import SpecialtyResult
+
+from schemas import SpecialtyResult, ResumeToGovernment
+from configs.slovar import uni_spec
+from service.llm_interface import llm_interface
 
 
 class Specialty(BaseModel):
@@ -17,11 +18,8 @@ class Specialty(BaseModel):
 
 
 class SpecialtyNormalizer:
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-        self.url = "https://caila.io/api/adapters/openai/chat/completions"
 
-    async def normalize(self, raw_text: str) -> Specialty:
+    async def normalize(self, raw_text: str, agent_model_name: str = None) -> Specialty:
         """Нормализуем: regex → LLM → fallback"""
 
         result = self._parse_with_regex(raw_text)
@@ -31,7 +29,7 @@ class SpecialtyNormalizer:
                 original_text=raw_text, code=result["code"], name=result["name"]
             )
 
-        return await self._normalize_with_llm(raw_text)
+        return await self._normalize_with_llm(raw_text, agent_model_name)
 
     def _parse_with_regex(self, text: str) -> Optional[dict]:
         """Парсим регуляками"""
@@ -55,28 +53,13 @@ class SpecialtyNormalizer:
 
         return {"code": code, "name": name}
 
-    async def _normalize_with_llm(self, raw_text: str) -> Specialty:
+    async def _normalize_with_llm(self, raw_text: str, agent_model_name: str = None) -> Specialty:
         """Нормализуем с помощью LLM"""
         prompt = self._build_prompt(raw_text)
 
         try:
-            async with AsyncClient(timeout=30) as client:
-                response = await client.post(
-                    self.url,
-                    headers={"Authorization": f"Bearer {self.api_key}"},
-                    json={
-                        "model": "just-ai/t-tech-T-pro-it-1.0",
-                        "messages": [{"role": "user", "content": prompt}],
-                        "temperature": 0.1,
-                    },
-                )
-
-                if response.status_code == 200:
-                    answer = response.json()["choices"][0]["message"]["content"]
-                    return self._parse_response(answer, raw_text)
-                else:
-                    return self._create_fallback(raw_text)
-
+            answer = await llm_interface.create_completions(prompt=prompt, model_name=agent_model_name)
+            return self._parse_response(answer, raw_text)
         except Exception as e:
             print(f"Ошибка при запросе к LLM: {e}")
             return self._create_fallback(raw_text)
@@ -125,59 +108,71 @@ class SpecialtyNormalizer:
 class SpecialtyMatcher:
     """Проверяем есть ли специальность в перечне"""
 
-    def __init__(self, reference_file: str):
-        self.specialties_list = self._load_specialties_list(reference_file)
-
-    @staticmethod
-    def _load_specialties_list(file_path: str) -> list:
-        """Загружаем перечень специальностей, Файл txt"""
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Файл перечня {file_path} не найден")
-
-        with open(file_path, "r", encoding="utf-8") as f:
-            data = [line.strip() for line in f.readlines() if line.strip()]
-
-        return data
+    def __init__(self):
+        self.specialites_by_code = uni_spec
+        self.specialties_by_name = {name.lower(): code for code, name in uni_spec.items()}
 
     def find_match(self, specialty: Specialty) -> dict:
-        "Ишем совпадение только по коду"
+        "Ишем совпадение по коду или имени"
         if specialty.code:
             result = self._find_by_code(specialty.code)
             if result:
                 return result
+        if specialty.name:
+            result = self._find_by_name(specialty.name)
+            if result:
+                return result
 
-        return {"found": False, "matched_name": None, "method": "by_code"}
+        return {"found": False, "matched_name": None, "method": "by_code_and_name"}
 
     def _find_by_code(self, code: str) -> dict | None:
         """Ищем по коду"""
-        for speciality in self.specialties_list:
-            if code in speciality:
-                return {"found": True, "matched_name": speciality, "method": "by_code"}
-        return None
+        if code in self.specialites_by_code:
+            name = self.specialites_by_code[code]
+            return {"code": code, "name": name}
+
+    def _find_by_name(self, name: str) -> dict | None:
+        """Ищем по имени"""
+        if name in self.specialties_by_name:
+            code = self.specialties_by_name[name.lower()]
+            return {"code": code, "name": name}
 
 
 async def agent_normalizer(
-    specialty: str, api_key: str, specialties_path
+    specialty: str,
+    agent_model_name: str = None
 ) -> SpecialtyResult:
     """Нормализует специальность и проверяет её в перечне
     Args:
         specialty: Специальность которую ввел пользователь
-        api_key: API ключ для LLM
-        specialties_path: Путь к файлу с перечнем специальностей
-
+        agent_model_name: имя модели агента, который будет стандартизовать специальность
     Returns:
         SpecialtyResult с результатом нормализации и поиска
     """
-    normalizer = SpecialtyNormalizer(api_key)
-    matcher = SpecialtyMatcher(specialties_path)
+    normalizer = SpecialtyNormalizer()
+    matcher = SpecialtyMatcher()
 
-    normalized_specialty = await normalizer.normalize(specialty)
+    normalized_specialty = await normalizer.normalize(specialty, agent_model_name)
     match_result = matcher.find_match(normalized_specialty)
 
     return SpecialtyResult(
         original_text=normalized_specialty.original_text,
-        code=normalized_specialty.code,
-        name=normalized_specialty.name,
-        found=match_result["found"],
-        matched_name=match_result["matched_name"],
+        code=match_result["code"] if match_result else None,
+        name=match_result["name"] if match_result else None,
     )
+
+
+async def check_resume_specialties(resume: ResumeToGovernment, agent_model_name: str = None) -> List[SpecialtyResult]:
+    """Проверяет специальности из резюме через агент нормализации"""
+    specialties_results = []
+
+    if resume.education and resume.education.higherEducation:
+        for edu in resume.education.higherEducation:
+            if edu.specialty:
+                specialty_result = await agent_normalizer(
+                    specialty=edu.specialty,
+                    agent_model_name=agent_model_name
+                )
+                specialties_results.append(specialty_result)
+
+    return specialties_results

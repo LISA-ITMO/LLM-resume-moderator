@@ -9,8 +9,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY *.py .
-COPY resume_rules.json .
-
-EXPOSE 8000
+COPY configs .
+COPY service .
 
 CMD ["python", "main.py"]

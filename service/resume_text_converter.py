@@ -63,10 +63,8 @@ def resume_to_text(resume: ResumeToGovernment) -> str:
 
             if relative_info:
                 relatives_section.append(
-                    f"{i}. "
-                    + "\n   ".join(
-                        [relative_info[0]]
-                        + [f"   {line}" for line in relative_info[1:]]
+                    f"{i}. " + "\n   ".join(
+                        [relative_info[0]] + [f"   {line}" for line in relative_info[1:]]
                     )
                 )
 

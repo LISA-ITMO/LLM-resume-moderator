@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/app
+  IMAGE_NAME: ${{ github.repository }}
   PYTHON_VERSION: "3.12"
 
 jobs:
@@ -25,18 +25,18 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Install linting tools
-        working-directory: ./app
+        working-directory: ./
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 black isort
+          pip install flake8 black isort flake8-isort
 
       - name: Run flake8 (PEP8 compliance)
-        working-directory: ./app
+        working-directory: ./
         run: |
-          flake8 . --count --max-line-length=511 --ignore=E203,W503 --show-source --statistics
+          flake8 . --count --max-line-length=511 --ignore=I001,I005 --show-source --statistics
 
       - name: Check formatting with black
-        working-directory: ./app
+        working-directory: ./
         run: |
           black --check --diff .
   test:
@@ -51,23 +51,23 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Create .env file
-        working-directory: ./app
+        working-directory: ./
         run: |
           echo "${{ secrets.ENV }}" > .env
 
       - name: Install main dependencies
-        working-directory: ./app
+        working-directory: ./
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Install test dependencies
-        working-directory: ./app
+        working-directory: ./
         run: |
           pip install -r tests/requirements-test.txt
 
       - name: Run E2E tests
-        working-directory: ./app
+        working-directory: ./
         run: |
           python -m pytest tests/test_e2e.py -v -s
 
@@ -102,8 +102,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./app
-          file: ./app/Dockerfile
+          context: ./
+          file: ./Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
