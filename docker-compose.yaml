@@ -2,7 +2,7 @@ version: '3.12'
 
 services:
   moderator-service:
-    image: ghcr.io/lisa-itmo/llm-resume-moderator/app:main
+    image: toponedevopssng/llm-resume-moderator:main
     environment:
       - MLP_API_KEY=${MLP_API_KEY}
       - FASTAPI_PORT=${FASTAPI_PORT}
