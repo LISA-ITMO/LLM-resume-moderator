@@ -1,38 +1,12 @@
-import os
+import json
+import re
+from typing import List
 
-from dotenv import load_dotenv
+from schemas import DEFAULT_RULES, ResponseWithReasoning, ResumeToGovernment, Rule
+from service.resume_text_converter import resume_to_text
+from service.llm_interface import llm_interface
 
-load_dotenv("../.env")
-load_dotenv(".env")
-
-MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 MB
-STORAGE_DIR = "storage"
-
-llm_providers = {
-    'local': {
-        'PROVIDER_URL': 'http://localhost:8001/v1',
-        'MLP_API_KEY': 'sk-no-key-required',
-        'models': {
-            'T_it_1_0': 'ggml-org/Qwen3-1.7B-GGUF'
-            }
-        },
-    'caila.io': {
-        'PROVIDER_URL': 'https://caila.io/api/adapters/openai',
-        'MLP_API_KEY': os.environ.get('MLP_API_KEY'),
-        'models': {
-            'T_it_1_0': 'just-ai/t-tech-T-pro-it-1.0'
-            }
-        }
-}
-
-LLM_PROVIDER = os.environ.get("LLM_PROVIDER")
-PROVIDER_URL = llm_providers[LLM_PROVIDER]["PROVIDER_URL"]
-MLP_API_KEY = llm_providers[LLM_PROVIDER]["MLP_API_KEY"]
-MODELS_DICT = llm_providers[LLM_PROVIDER]["models"]
-
-DEFAULT_MODERATOR = "T_it_1_0"
-
-PROMPT = """
+NO_REASONING_PROMPT = """
 Ты — ИИ-модератор резюме. Проверь текст резюме на соответствие следующим правилам. Если есть нарушения, верни JSON-объект с типом нарушения и фрагментом текста, который нарушает правило. Если нарушений нет, верни статус "OK".
 
 **Правила:**
@@ -55,7 +29,7 @@ PROMPT = """
 REASONING_PROMPT = """
 Ты — ИИ-модератор резюме. Проверь текст резюме на соответствие следующим правилам. Если есть нарушения, верни JSON-объект с типом нарушения и фрагментом текста, который нарушает правило. Если нарушений нет, верни статус "OK".
 
-**Правила:** 
+**Правила:**
 {rules}
 
 **Инструкции:**
@@ -70,4 +44,61 @@ REASONING_PROMPT = """
 {resume_text}
 """
 
-FASTAPI_PORT = 8000
+
+def parse_answer(response_str: str, reasoning: bool = False) -> ResponseWithReasoning:
+
+    if reasoning:
+        if reasoning:
+            reasoning_start = response_str.find("<think>")
+            reasoning_end = response_str.find("</think>")
+        if reasoning_start != -1 and reasoning_end != -1:
+            reasoning_string = response_str[reasoning_start + 7 : reasoning_end].strip()
+            parts = [reasoning_string, response_str[reasoning_end + 8 :]]
+        else:
+            reasoning_string = ""
+            parts = ["", response_str]
+    else:
+        parts = response_str.split("Результат:")
+        reasoning_string = parts[0].replace("Рассуждения:", "").strip()
+
+    json_match = re.search(r"```json\n(.*?)\n```", parts[1], re.DOTALL) or re.search(
+        r"(\{.*?\})", parts[1], re.DOTALL
+    )
+    json_str = json_match.group(1) if json_match else "{}"
+
+    try:
+        result_dict = json.loads(json_str)
+    except json.JSONDecodeError:
+        result_dict = {"error": "Invalid JSON format"}
+
+    return ResponseWithReasoning(
+        reasoning=reasoning_string, violatedRules=result_dict["violated_rules"]
+    )
+
+
+async def moderate(
+    resume: ResumeToGovernment, rules: List[Rule] = None, moderator_model: str = None
+) -> ResponseWithReasoning:
+    if rules is None:
+        rules = DEFAULT_RULES
+
+    resume_text = resume_to_text(resume=resume)
+
+    formated_reasoning_prompt = REASONING_PROMPT.replace(
+        "{rules}", "\n".join([rule.model_dump_json() for rule in rules])
+    ).replace("{resume_text}", resume_text)
+
+    formated_no_reasoning_prompt = NO_REASONING_PROMPT.replace(
+        "{rules}", "\n".join([rule.model_dump_json() for rule in rules])
+    ).replace("{resume_text}", resume_text)
+
+    answer_content = await llm_interface.create_completions(
+        prompt=formated_no_reasoning_prompt,
+        reasoning_prompt=formated_reasoning_prompt,
+        model_name=moderator_model,
+    )
+
+    reasoning = await llm_interface.define_llm_reasoning(model_name=moderator_model)
+    parsed_result = parse_answer(response_str=answer_content, reasoning=reasoning)
+
+    return parsed_result

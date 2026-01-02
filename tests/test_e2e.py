@@ -5,34 +5,63 @@ from typing import Generator
 import pytest
 import requests
 
+from configs.config import FASTAPI_PORT
+
+BASE_URL = f"http://localhost:{FASTAPI_PORT}"
+
 
 @pytest.fixture(scope="module")
 def app_server() -> Generator[None, None, None]:
     """Запускает FastAPI приложение и останавливает его после тестов"""
-    # Запускаем приложение
     process = subprocess.Popen(
         ["python", "main.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
-
-    # Даем время на запуск сервера
-    time.sleep(3)
-
-    # Проверяем, что процесс запустился
+    for _ in range(30):
+        try:
+            if requests.get(f"{BASE_URL}/docs", timeout=1).status_code == 200:
+                break
+        except requests.ConnectionError:
+            time.sleep(1)
+    else:
+        stdout, stderr = process.communicate()
+        raise RuntimeError(
+            f"Server failed to start on port {FASTAPI_PORT}.\n"
+            f"STDOUT: {stdout.decode()}\nSTDERR: {stderr.decode()}"
+        )
     if process.poll() is not None:
         stdout, stderr = process.communicate()
         raise RuntimeError(f"Failed to start server: {stderr.decode()}")
-
     yield
-
-    # Останавливаем приложение после тестов
     process.terminate()
     process.wait(timeout=5)
 
 
-def test_reserve_selection_success(app_server):
-    """E2E тест для POST /moderator/reserve/selection"""
+def test_full_moderation_pipeline(app_server):
+    """E2E тест для полного пайплайна: загрузка диплома → модерация"""
 
-    # Подготавливаем тело запроса
+    # --- Шаг 1: Загрузка файла диплома ---
+    with open("tests/test_diploma.pdf", "rb") as f:
+        files = {"file": ("Diploma.pdf", f, "application/pdf")}
+        upload_response = requests.post(
+            f"{BASE_URL}/moderator/reserve/upload-education-file",
+            files=files,
+            timeout=60,
+        )
+
+    assert (
+        upload_response.status_code == 200
+    ), f"Upload failed: {upload_response.status_code} — {upload_response.text}"
+
+    upload_data = upload_response.json()
+    assert "message" in upload_data, "No 'message' in upload response"
+    assert (
+        "educationFilename" in upload_data
+    ), "No 'educationFilename' in upload response"
+
+    uploaded_filename = upload_data["educationFilename"]
+    print(f"✓ Diploma uploaded successfully: {uploaded_filename}")
+
+    # --- Шаг 2: Полная модерация с указанием файла ---
     request_body = {
         "rules": [
             {
@@ -70,7 +99,7 @@ def test_reserve_selection_success(app_server):
                         "dateOfAdmission": "2016-09-01",
                         "dateOfGraduation": "2020-06-30",
                         "institutionName": "Санкт-Петербургский государственный университет",
-                        "specialty": "01.03.02 Прикладная математика и информатика",
+                        "specialty": "09.03.04 Программная инженерия",
                         "level": "Бакалавриат",
                         "formOfEducation": "Очная",
                         "year": 4,
@@ -115,54 +144,79 @@ def test_reserve_selection_success(app_server):
             "motivation": "Хочу внести вклад в развитие Санкт-Петербурга и реализовать свой потенциал",
             "source": "Информация в вузе (центр карьеры, ярмарка вакансий)",
         },
-        "moderation_model": "T_it_1_0",
+        "moderation_model": "default",
+        "educationFilename": uploaded_filename,  # ← важно: имя файла из загрузки
     }
 
-    # Отправляем POST запрос
-    response = requests.post(
+    moderation_response = requests.post(
         "http://localhost:8000/moderator/reserve/selection",
         json=request_body,
         timeout=60,
     )
 
-    # Проверяем статус код
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+    assert (
+        moderation_response.status_code == 200
+    ), f"Moderation failed: {moderation_response.status_code} — {moderation_response.text}"
 
-    # Получаем JSON ответ
-    data = response.json()
+    data = moderation_response.json()
 
-    # Проверяем наличие всех обязательных полей
-    assert "reasoning" in data, "Field 'reasoning' is missing"
-    assert "result" in data, "Field 'result' is missing"
-    assert "time_ms" in data, "Field 'time_ms' is missing"
+    # Проверяем обязательные поля
+    required_fields = [
+        "reasoning",
+        "violatedRules",
+        "docScanAnswer",
+        "educationFromForm",
+        "result",
+        "timeMs",
+    ]
+    for field in required_fields:
+        assert field in data, f"Field '{field}' is missing"
 
-    # Проверяем типы полей
-    assert isinstance(data["reasoning"], str), "Field 'reasoning' must be a string"
-    assert isinstance(data["result"], dict), "Field 'result' must be a dict"
-    assert isinstance(data["time_ms"], int), "Field 'time_ms' must be an int"
+    # Проверяем типы
+    assert isinstance(data["reasoning"], str), "reasoning must be string"
+    assert isinstance(data["violatedRules"], list), "violatedRules must be list"
+    assert isinstance(data["docScanAnswer"], dict), "docScanAnswer must be dict"
+    assert isinstance(data["educationFromForm"], list), "educationFromForm must be list"
+    assert isinstance(data["result"], dict), "result must be dict"
+    assert isinstance(data["timeMs"], int), "timeMs must be int"
 
     # Проверяем структуру result
-    assert "status" in data["result"], "Field 'status' is missing in result"
-    assert (
-        "violated_rules" in data["result"]
-    ), "Field 'violated_rules' is missing in result"
+    result_fields = [
+        "validEducationDocument",
+        "educationMatch",
+        "educationInList",
+        "noViolatedRules",
+        "overallSuccess",
+    ]
+    for field in result_fields:
+        assert field in data["result"], f"Field '{field}' missing in result"
+        assert isinstance(data["result"][field], bool), f"{field} must be boolean"
 
-    # Проверяем значения
+    # Проверяем, что всё прошло успешно (по умолчанию)
     assert (
-        data["result"]["status"] == "OK"
-    ), f"Expected status 'OK', got '{data['result']['status']}'"
-    assert isinstance(
-        data["result"]["violated_rules"], list
-    ), "Field 'violated_rules' must be a list"
+        data["result"]["overallSuccess"] is True
+    ), "Overall success expected to be True"
+    assert len(data["violatedRules"]) == 0, "Expected no violated rules"
+
+    # Проверяем docScanAnswer
+    assert data["docScanAnswer"]["type"] == "Diploma", "Expected type 'Diploma'"
+    assert isinstance(data["docScanAnswer"]["code"], str), "code must be string"
+    assert isinstance(data["docScanAnswer"]["name"], str), "name must be string"
+
+    # Проверяем educationFromForm (должен быть хотя бы один элемент)
     assert (
-        len(data["result"]["violated_rules"]) == 0
-    ), f"Expected empty violated_rules, got {data['result']['violated_rules']}"
+        len(data["educationFromForm"]) > 0
+    ), "educationFromForm should contain at least one item"
+    for edu in data["educationFromForm"]:
+        assert "original_text" in edu, "original_text missing"
+        assert "code" in edu, "code missing"
+        assert "name" in edu, "name missing"
 
-    # Проверяем, что time_ms положительное число
-    assert data["time_ms"] > 0, f"Expected positive time_ms, got {data['time_ms']}"
+    # Проверяем время
+    assert data["timeMs"] > 0, f"Expected positive timeMs, got {data['timeMs']}"
 
-    print("\n✓ Test passed successfully!")
+    print("\n✅ Full moderation pipeline passed successfully!")
     print(f"  - Reasoning length: {len(data['reasoning'])} chars")
-    print(f"  - Status: {data['result']['status']}")
-    print(f"  - Violated rules: {data['result']['violated_rules']}")
-    print(f"  - Time: {data['time_ms']} ms")
+    print(f"  - Violated rules: {len(data['violatedRules'])}")
+    print(f"  - Overall success: {data['result']['overallSuccess']}")
+    print(f"  - Time: {data['timeMs']} ms")

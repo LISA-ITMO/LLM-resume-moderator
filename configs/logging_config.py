@@ -18,7 +18,6 @@ LOGGING_CONFIG = {
         "uvicorn": {"handlers": ["default"], "level": "INFO"},
         "uvicorn.error": {"handlers": ["default"], "level": "INFO"},
         "uvicorn.access": {"handlers": ["default"], "level": "INFO"},
-
         "app": {
             "handlers": ["default"],
             "level": "INFO",

@@ -1,0 +1,73 @@
+version: '3.12'
+
+services:
+  moderator-service:
+    image: ghcr.io/lisa-itmo/llm-resume-moderator/app:main
+    environment:
+      - MLP_API_KEY=${MLP_API_KEY}
+      - FASTAPI_PORT=${FASTAPI_PORT}
+      - LLM_PROVIDER=${LLM_PROVIDER}
+      - LLM_SERVICE_PORT=${LLM_SERVICE_PORT}
+      - MODEL_REASONING=${MODEL_REASONING}
+    ports:
+      - "${FASTAPI_PORT}:${FASTAPI_PORT}"
+    networks:
+      - app-network
+    depends_on:
+      - llm-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${FASTAPI_PORT}/docs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  llm-pull:
+    image: nexa4ai/nexasdk:latest
+    container_name: nexa-pull
+    privileged: true
+    environment:
+      - NEXA_TOKEN=${MLP_API_KEY}
+    volumes:
+      - ./data:/data
+      - /etc/machine-id:/etc/machine-id:ro
+    entrypoint: []
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        MODEL_FILE="/data/nexa_sdk/models/ggml-org/Qwen3-1.7B-GGUF/nexa.manifest"
+        if [ -f "$$MODEL_FILE" ]; then
+          echo "Model already exists at $$MODEL_FILE. Skipping download."
+          exit 0
+        fi
+        echo "Downloading Qwen3-1.7B (Q4_K_M)..."
+        nexa pull --model-type=llm ggml-org/Qwen3-1.7B-GGUF:Q4_K_M
+        echo "Model downloaded successfully."
+    restart: "no"
+    networks:
+      - app-network
+
+  llm-service:
+    image: nexa4ai/nexasdk:latest
+    container_name: nexa-serve
+    privileged: true
+    environment:
+      - NEXA_TOKEN=${MLP_API_KEY}
+    volumes:
+      - ./data:/data
+      - /etc/machine-id:/etc/machine-id:ro
+    command: ["serve", "--host", "0.0.0.0:${LLM_SERVICE_PORT}"]
+    ports:
+      - "${LLM_SERVICE_PORT}:${LLM_SERVICE_PORT}"
+    depends_on:
+      llm-pull:
+        condition: service_completed_successfully
+    networks:
+      - app-network
+      
+
+networks:
+  app-network:
+    driver: bridge
