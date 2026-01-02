@@ -1,7 +1,6 @@
 FROM python:3.12-slim
 
-WORKDIR /app
-
+WORKDIR ./
 
 RUN apt update && apt install curl -y
 
