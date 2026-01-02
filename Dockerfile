@@ -8,7 +8,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY *.py .
-COPY configs .
-COPY service .
+COPY configs/ .
+COPY service/ .
 
 CMD ["python", "main.py"]
