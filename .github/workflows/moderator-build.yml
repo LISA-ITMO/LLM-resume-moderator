@@ -119,7 +119,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           # ЗАМЕНИ ЭТО на своё имя на Docker Hub и имя образа!
-          images: toponedevopssng/llm-resume-moderator:main
+          images: toponedevopssng/llm-resume-moderator
           tags: |
             type=raw,value=latest
             type=ref,event=branch
