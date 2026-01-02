@@ -51,10 +51,10 @@ async def upload_education_file(file: UploadFile = File(...)):
             first_page=1,
             last_page=1
         )
-    except Exception:
+    except Exception as e:
         return JSONResponse(
             status_code=422,
-            content=BusynessErrorResponse(message="Файл не является валидным PDF документом").model_dump(mode='json')
+            content=BusynessErrorResponse(message=f"Файл не является валидным PDF документом, {e}").model_dump(mode='json')
         )
 
     os.makedirs(STORAGE_DIR, exist_ok=True)
