@@ -1,7 +1,13 @@
 from httpx import AsyncClient
 from openai import AsyncOpenAI
 
-from configs.config import MLP_API_KEY, PROVIDER_URL, MODELS_DICT, DEFAULT_MODERATOR, REASONING_MAPPING
+from configs.config import (
+    MLP_API_KEY,
+    PROVIDER_URL,
+    MODELS_DICT,
+    DEFAULT_MODERATOR,
+    REASONING_MAPPING,
+)
 
 
 class LLMInterface:
@@ -27,7 +33,7 @@ class LLMInterface:
         response = await self.client.chat.completions.create(
             messages=[{"role": "user", "content": "test"}],
             model=provider_model_name,
-            max_tokens=1
+            max_tokens=1,
         )
 
         first_token = response.choices[0].message.content
@@ -38,10 +44,14 @@ class LLMInterface:
             self.reasoning_mapping[model_name] = False
             return False
 
-    async def create_completions(self, prompt: str, reasoning_prompt: str = None, model_name: str = None) -> str:
+    async def create_completions(
+        self, prompt: str, reasoning_prompt: str = None, model_name: str = None
+    ) -> str:
 
         if model_name is None:
-            provider_model_name = self.models_dict.get(self.default_moderator, self.default_moderator)
+            provider_model_name = self.models_dict.get(
+                self.default_moderator, self.default_moderator
+            )
         else:
             provider_model_name = self.models_dict.get(model_name, model_name)
 

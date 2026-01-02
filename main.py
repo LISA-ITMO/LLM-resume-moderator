@@ -8,8 +8,10 @@ from service.utils import kill_port
 
 setup_logging()
 
-app = FastAPI(title='LLM Resume Moderator API',
-              description='Here is LLM Resume Moderator fastapi backend')
+app = FastAPI(
+    title="LLM Resume Moderator API",
+    description="Here is LLM Resume Moderator fastapi backend",
+)
 
 app.include_router(moderation_router)
 

@@ -48,13 +48,15 @@ def test_full_moderation_pipeline(app_server):
             timeout=60,
         )
 
-    assert upload_response.status_code == 200, (
-        f"Upload failed: {upload_response.status_code} — {upload_response.text}"
-    )
+    assert (
+        upload_response.status_code == 200
+    ), f"Upload failed: {upload_response.status_code} — {upload_response.text}"
 
     upload_data = upload_response.json()
     assert "message" in upload_data, "No 'message' in upload response"
-    assert "educationFilename" in upload_data, "No 'educationFilename' in upload response"
+    assert (
+        "educationFilename" in upload_data
+    ), "No 'educationFilename' in upload response"
 
     uploaded_filename = upload_data["educationFilename"]
     print(f"✓ Diploma uploaded successfully: {uploaded_filename}")
@@ -152,9 +154,9 @@ def test_full_moderation_pipeline(app_server):
         timeout=60,
     )
 
-    assert moderation_response.status_code == 200, (
-        f"Moderation failed: {moderation_response.status_code} — {moderation_response.text}"
-    )
+    assert (
+        moderation_response.status_code == 200
+    ), f"Moderation failed: {moderation_response.status_code} — {moderation_response.text}"
 
     data = moderation_response.json()
 
@@ -191,7 +193,9 @@ def test_full_moderation_pipeline(app_server):
         assert isinstance(data["result"][field], bool), f"{field} must be boolean"
 
     # Проверяем, что всё прошло успешно (по умолчанию)
-    assert data["result"]["overallSuccess"] is True, "Overall success expected to be True"
+    assert (
+        data["result"]["overallSuccess"] is True
+    ), "Overall success expected to be True"
     assert len(data["violatedRules"]) == 0, "Expected no violated rules"
 
     # Проверяем docScanAnswer
@@ -200,7 +204,9 @@ def test_full_moderation_pipeline(app_server):
     assert isinstance(data["docScanAnswer"]["name"], str), "name must be string"
 
     # Проверяем educationFromForm (должен быть хотя бы один элемент)
-    assert len(data["educationFromForm"]) > 0, "educationFromForm should contain at least one item"
+    assert (
+        len(data["educationFromForm"]) > 0
+    ), "educationFromForm should contain at least one item"
     for edu in data["educationFromForm"]:
         assert "original_text" in edu, "original_text missing"
         assert "code" in edu, "code missing"

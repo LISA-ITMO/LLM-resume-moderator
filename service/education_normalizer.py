@@ -53,12 +53,16 @@ class SpecialtyNormalizer:
 
         return {"code": code, "name": name}
 
-    async def _normalize_with_llm(self, raw_text: str, agent_model_name: str = None) -> Specialty:
+    async def _normalize_with_llm(
+        self, raw_text: str, agent_model_name: str = None
+    ) -> Specialty:
         """Нормализуем с помощью LLM"""
         prompt = self._build_prompt(raw_text)
 
         try:
-            answer = await llm_interface.create_completions(prompt=prompt, model_name=agent_model_name)
+            answer = await llm_interface.create_completions(
+                prompt=prompt, model_name=agent_model_name
+            )
             return self._parse_response(answer, raw_text)
         except Exception as e:
             print(f"Ошибка при запросе к LLM: {e}")
@@ -110,7 +114,9 @@ class SpecialtyMatcher:
 
     def __init__(self):
         self.specialites_by_code = uni_spec
-        self.specialties_by_name = {name.lower(): code for code, name in uni_spec.items()}
+        self.specialties_by_name = {
+            name.lower(): code for code, name in uni_spec.items()
+        }
 
     def find_match(self, specialty: Specialty) -> dict:
         "Ишем совпадение по коду или имени"
@@ -139,8 +145,7 @@ class SpecialtyMatcher:
 
 
 async def agent_normalizer(
-    specialty: str,
-    agent_model_name: str = None
+    specialty: str, agent_model_name: str = None
 ) -> SpecialtyResult:
     """Нормализует специальность и проверяет её в перечне
     Args:
@@ -162,7 +167,9 @@ async def agent_normalizer(
     )
 
 
-async def check_resume_specialties(resume: ResumeToGovernment, agent_model_name: str = None) -> List[SpecialtyResult]:
+async def check_resume_specialties(
+    resume: ResumeToGovernment, agent_model_name: str = None
+) -> List[SpecialtyResult]:
     """Проверяет специальности из резюме через агент нормализации"""
     specialties_results = []
 
@@ -170,8 +177,7 @@ async def check_resume_specialties(resume: ResumeToGovernment, agent_model_name:
         for edu in resume.education.higherEducation:
             if edu.specialty:
                 specialty_result = await agent_normalizer(
-                    specialty=edu.specialty,
-                    agent_model_name=agent_model_name
+                    specialty=edu.specialty, agent_model_name=agent_model_name
                 )
                 specialties_results.append(specialty_result)
 

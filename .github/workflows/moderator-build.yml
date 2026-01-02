@@ -33,7 +33,7 @@ jobs:
       - name: Run flake8 (PEP8 compliance)
         working-directory: ./
         run: |
-          flake8 . --count --max-line-length=511 --ignore=I001,I005 --show-source --statistics
+          flake8 . --count --max-line-length=511 --ignore=I005,I001,E203,W503 --show-source --statistics
 
       - name: Check formatting with black
         working-directory: ./

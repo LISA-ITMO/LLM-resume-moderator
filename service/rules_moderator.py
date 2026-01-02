@@ -2,12 +2,7 @@ import json
 import re
 from typing import List
 
-from schemas import (
-    DEFAULT_RULES,
-    ResponseWithReasoning,
-    ResumeToGovernment,
-    Rule
-)
+from schemas import DEFAULT_RULES, ResponseWithReasoning, ResumeToGovernment, Rule
 from service.resume_text_converter import resume_to_text
 from service.llm_interface import llm_interface
 
@@ -57,8 +52,8 @@ def parse_answer(response_str: str, reasoning: bool = False) -> ResponseWithReas
             reasoning_start = response_str.find("<think>")
             reasoning_end = response_str.find("</think>")
         if reasoning_start != -1 and reasoning_end != -1:
-            reasoning_string = response_str[reasoning_start + 7:reasoning_end].strip()
-            parts = [reasoning_string, response_str[reasoning_end + 8:]]
+            reasoning_string = response_str[reasoning_start + 7 : reasoning_end].strip()
+            parts = [reasoning_string, response_str[reasoning_end + 8 :]]
         else:
             reasoning_string = ""
             parts = ["", response_str]
@@ -66,7 +61,9 @@ def parse_answer(response_str: str, reasoning: bool = False) -> ResponseWithReas
         parts = response_str.split("Результат:")
         reasoning_string = parts[0].replace("Рассуждения:", "").strip()
 
-    json_match = re.search(r"```json\n(.*?)\n```", parts[1], re.DOTALL) or re.search(r"(\{.*?\})", parts[1], re.DOTALL)
+    json_match = re.search(r"```json\n(.*?)\n```", parts[1], re.DOTALL) or re.search(
+        r"(\{.*?\})", parts[1], re.DOTALL
+    )
     json_str = json_match.group(1) if json_match else "{}"
 
     try:
@@ -74,7 +71,9 @@ def parse_answer(response_str: str, reasoning: bool = False) -> ResponseWithReas
     except json.JSONDecodeError:
         result_dict = {"error": "Invalid JSON format"}
 
-    return ResponseWithReasoning(reasoning=reasoning_string, violatedRules=result_dict['violated_rules'])
+    return ResponseWithReasoning(
+        reasoning=reasoning_string, violatedRules=result_dict["violated_rules"]
+    )
 
 
 async def moderate(
@@ -96,13 +95,10 @@ async def moderate(
     answer_content = await llm_interface.create_completions(
         prompt=formated_no_reasoning_prompt,
         reasoning_prompt=formated_reasoning_prompt,
-        model_name=moderator_model
+        model_name=moderator_model,
     )
 
     reasoning = await llm_interface.define_llm_reasoning(model_name=moderator_model)
-    parsed_result = parse_answer(
-        response_str=answer_content,
-        reasoning=reasoning
-    )
+    parsed_result = parse_answer(response_str=answer_content, reasoning=reasoning)
 
     return parsed_result
