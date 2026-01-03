@@ -8,7 +8,6 @@ services:
       - FASTAPI_PORT=${FASTAPI_PORT}
       - LLM_PROVIDER=${LLM_PROVIDER}
       - LLM_SERVICE_PORT=${LLM_SERVICE_PORT}
-      - MODEL_REASONING=${MODEL_REASONING}
     ports:
       - "${FASTAPI_PORT}:${FASTAPI_PORT}"
     networks:
