@@ -1,8 +1,13 @@
 FROM python:3.12-slim
 
-WORKDIR ./
+WORKDIR /app
 
-RUN apt update && apt install curl -y
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
