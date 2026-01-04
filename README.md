@@ -22,7 +22,7 @@ LLM Resume Moderator — это FastAPI-приложение, предназна
 ```bash
 git clone https://github.com/LISA-ITMO/LLM-resume-moderator.git &&
 cd LLM-resume-moderator &&
-docker-compose up
+docker compose up
 ```
 Сервис будет доступен по адресу `http://localhost:8000`
 
