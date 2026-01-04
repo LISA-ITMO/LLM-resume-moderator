@@ -7,11 +7,12 @@ load_dotenv()
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 MB
 STORAGE_DIR = "storage"
 
+LLM_HOST = os.environ.get("LLM_HOST", "localhost")
 LLM_SERVICE_PORT = os.environ["LLM_SERVICE_PORT"]
 
 llm_providers = {
     "local": {
-        "PROVIDER_URL": f"http://llm-service:{LLM_SERVICE_PORT}/v1",
+        "PROVIDER_URL": f"http://{LLM_HOST}:{LLM_SERVICE_PORT}/v1",
         "models": {"default": "ggml-org/Qwen3-1.7B-GGUF"},
     },
     "caila.io": {

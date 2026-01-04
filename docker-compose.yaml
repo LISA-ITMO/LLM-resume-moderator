@@ -9,6 +9,7 @@ services:
       - FASTAPI_PORT=${FASTAPI_PORT}
       - LLM_PROVIDER=${LLM_PROVIDER}
       - LLM_SERVICE_PORT=${LLM_SERVICE_PORT}
+      - LLM_HOST=llm-service
     ports:
       - "${FASTAPI_PORT}:${FASTAPI_PORT}"
     networks:
