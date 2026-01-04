@@ -11,7 +11,7 @@ LLM_SERVICE_PORT = os.environ["LLM_SERVICE_PORT"]
 
 llm_providers = {
     "local": {
-        "PROVIDER_URL": f"http://localhost:{LLM_SERVICE_PORT}/v1",
+        "PROVIDER_URL": f"http://llm-service:{LLM_SERVICE_PORT}/v1",
         "models": {"default": "ggml-org/Qwen3-1.7B-GGUF"},
     },
     "caila.io": {
