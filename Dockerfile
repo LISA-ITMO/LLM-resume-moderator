@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12
 
 WORKDIR /app
 
@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsm6 \
     libxrender1 \
     libxext6 \
+    libgl1 \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

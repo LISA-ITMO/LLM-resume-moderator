@@ -2,6 +2,7 @@ version: '3.12'
 
 services:
   moderator-service:
+    build: ./
     image: toponedevopssng/llm-resume-moderator:main
     environment:
       - MLP_API_KEY=${MLP_API_KEY}
