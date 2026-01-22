@@ -14,8 +14,6 @@ services:
       - "${FASTAPI_PORT}:${FASTAPI_PORT}"
     networks:
       - app-network
-    depends_on:
-      - llm-service
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${FASTAPI_PORT}/docs"]
       interval: 10s
