@@ -61,10 +61,26 @@ def parse_answer(response_str: str, reasoning: bool = False) -> ResponseWithReas
         parts = response_str.split("Результат:")
         reasoning_string = parts[0].replace("Рассуждения:", "").strip()
 
-    json_match = re.search(r"```json\n(.*?)\n```", parts[1], re.DOTALL) or re.search(
-        r"(\{.*?\})", parts[1], re.DOTALL
-    )
-    json_str = json_match.group(1) if json_match else "{}"
+    json_match = re.search(r"```json\s*\n(.*?)\n```", parts[1], re.DOTALL)
+
+    if not json_match:
+        start = parts[1].find("{")
+        if start != -1:
+            bracket_count = 0
+            for i, char in enumerate(parts[1][start:], start):
+                if char == "{":
+                    bracket_count += 1
+                elif char == "}":
+                    bracket_count -= 1
+                    if bracket_count == 0:
+                        json_str = parts[1][start : i + 1]
+                        break
+            else:
+                json_str = "{}"
+        else:
+            json_str = "{}"
+    else:
+        json_str = json_match.group(1)
 
     try:
         result_dict = json.loads(json_str)
@@ -72,7 +88,7 @@ def parse_answer(response_str: str, reasoning: bool = False) -> ResponseWithReas
         result_dict = {"error": "Invalid JSON format"}
 
     return ResponseWithReasoning(
-        reasoning=reasoning_string, violatedRules=result_dict["violated_rules"]
+        reasoning=reasoning_string, violatedRules=result_dict.get("violated_rules", [])
     )
 
 

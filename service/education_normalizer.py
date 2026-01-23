@@ -117,31 +117,116 @@ class SpecialtyMatcher:
         self.specialties_by_name = {
             name.lower(): code for code, name in uni_spec.items()
         }
+        self.grouped_unispec = self._group_specialties_by_category(uni_spec)
 
-    def find_match(self, specialty: Specialty) -> dict:
+    def _group_specialties_by_category(self, uni_spec: dict) -> dict:
+        grouped = {}
+        last_prefix = None
+        for code, name in uni_spec.items():
+            if (not last_prefix) or code[:2] != last_prefix:
+                last_prefix = code[:2]
+                category_key = f"{last_prefix}: {name}"
+                grouped[category_key] = {code: name}
+            else:
+                grouped[category_key][code] = name
+
+        return grouped
+
+    async def find_match(self, specialty: Specialty) -> dict:
         "Ишем совпадение по коду или имени"
         if specialty.code:
             result = self._find_by_code(specialty.code)
-            if result:
+            if result["found"]:
                 return result
         if specialty.name:
             result = self._find_by_name(specialty.name)
-            if result:
+            if result["found"]:
                 return result
 
-        return {"found": False, "matched_name": None, "method": "by_code_and_name"}
+        return await self._find_specialty_with_llm(specialty.original_text)
 
     def _find_by_code(self, code: str) -> dict | None:
         """Ищем по коду"""
         if code in self.specialites_by_code:
             name = self.specialites_by_code[code]
-            return {"code": code, "name": name}
+            return {"found": True, "code": code, "name": name}
+        else:
+            return {"found": False, "code": None, "name": None}
 
     def _find_by_name(self, name: str) -> dict | None:
         """Ищем по имени"""
-        if name in self.specialties_by_name:
+        if name.lower() in self.specialties_by_name:
             code = self.specialties_by_name[name.lower()]
-            return {"code": code, "name": name}
+            return {"found": True, "code": code, "name": name}
+        else:
+            return {"found": False, "code": None, "name": None}
+
+    async def _find_specialty_with_llm(self, query: str) -> dict:
+        """
+        Двухэтапный поиск образовательной программы.
+        На первом этапе LLM определяет укрупнённое направление (2 цифры) либо
+        возвращает NONE, если запрос не относится к образовательным направлениям.
+        На втором этапе LLM выбирает конкретный код образовательной программы.
+        """
+        stage1_prompt = (
+            "Определи, относится ли запрос к образовательному направлению.\n"
+            "Если не относится — ответь строго: NONE\n"
+            "Если относится — ответь строго двумя цифрами начала кода "
+            "укрупнённого направления (например: 01, 02, 03).\n"
+            "Отвечай не думая и если будет несколько вариантов выдавай первый.\n\n"
+            f"Запрос: {query}\n"
+            f"Доступные направления:\n" + "\n".join(self.grouped_unispec.keys())
+        )
+
+        stage1_response: str = (
+            (await llm_interface.create_completions(stage1_prompt))
+            .split("</think>\n\n")[-1]
+            .strip()
+        )
+
+        if stage1_response == "NONE":
+            return {"found": False, "code": None, "name": None}
+
+        prefix: str = stage1_response
+        category_key: str | None = None
+
+        for key in self.grouped_unispec.keys():
+            if key.startswith(prefix):
+                category_key = key
+                break
+
+        if category_key is None:
+            return {"found": False, "code": None, "name": None}
+
+        programs: dict[str, str] = self.grouped_unispec[category_key]
+
+        stage2_prompt = (
+            "Выбери наиболее подходящую образовательную программу.\n"
+            "Ответь строго кодом образовательной программы.\n"
+            "Отвечай не думая и если будет несколько вариантов выдавай первый.\n\n"
+            f"Запрос: {query}\n"
+            "Варианты:\n"
+            + "\n".join(f"{code} — {name}" for code, name in programs.items())
+        )
+
+        stage2_response: str = (
+            (await llm_interface.create_completions(stage2_prompt))
+            .split("</think>\n\n")[-1]
+            .strip()
+        )
+
+        if stage2_response not in programs:
+            return {"found": False, "code": None, "name": None}
+
+        return {
+            "found": True,
+            "code": stage2_response,
+            "name": programs[stage2_response],
+        }
+
+
+speciality_normalizer = SpecialtyNormalizer()
+education_matcher = SpecialtyMatcher()
 
 
 async def agent_normalizer(
@@ -154,16 +239,18 @@ async def agent_normalizer(
     Returns:
         SpecialtyResult с результатом нормализации и поиска
     """
-    normalizer = SpecialtyNormalizer()
-    matcher = SpecialtyMatcher()
 
-    normalized_specialty = await normalizer.normalize(specialty, agent_model_name)
-    match_result = matcher.find_match(normalized_specialty)
+    normalized_specialty = await speciality_normalizer.normalize(
+        specialty, agent_model_name
+    )
+    match_result = await education_matcher.find_match(normalized_specialty)
 
     return SpecialtyResult(
         original_text=normalized_specialty.original_text,
-        code=match_result["code"] if match_result else None,
-        name=match_result["name"] if match_result else None,
+        code=match_result["code"] if match_result["found"] else None,
+        name=(
+            match_result["name"].lower().capitalize() if match_result["found"] else None
+        ),
     )
 
 

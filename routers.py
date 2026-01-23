@@ -114,7 +114,7 @@ async def reserve_selection(selection_context: SelectionContext):
         selection_context.resume, agent_model_name=selection_context.moderation_model
     )
 
-    doc_answer = ocr_service.define_doc(selection_context.educationFilename)
+    doc_answer = await ocr_service.define_doc(selection_context.educationFilename)
 
     end_time = time.perf_counter()
     time_ms = int((end_time - start_time) * 1000)

@@ -23,7 +23,10 @@ class LLMInterface:
             http_client=AsyncClient(proxy=None, timeout=600),
         )
 
-    async def define_llm_reasoning(self, model_name: str) -> bool:
+    async def define_llm_reasoning(self, model_name: str = None) -> bool:
+
+        if model_name is None:
+            model_name = DEFAULT_MODERATOR
 
         provider_model_name = self.models_dict.get(model_name, model_name)
 
