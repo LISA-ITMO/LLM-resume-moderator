@@ -9,6 +9,8 @@ from paddleocr import PaddleOCR
 from configs.slovar import uni_spec
 from schemas import Doc, EducationDocType
 from configs.config import STORAGE_DIR
+from service.llm_interface import llm_interface
+from service.education_normalizer import education_matcher, Specialty
 
 
 class OCRService:
@@ -27,7 +29,7 @@ class OCRService:
     def define_spec(self, uni_spec, cifr_spec):
         return uni_spec[cifr_spec]
 
-    def define_doc(self, filename) -> Doc:
+    async def define_doc(self, filename) -> Doc:
         text_parts = []
         try:
             filename_stem = filename.split(".")[0]
@@ -43,7 +45,7 @@ class OCRService:
                 parsing_list = data_page["rec_texts"]
                 text_parts.append(" ".join(parsing_list))
                 text = "\n\n".join(text_parts)
-                partial_doc = self._define_doc_by_text(text)
+                partial_doc = await self._define_doc_by_text(text)
                 if partial_doc.type in (
                     EducationDocType.DIPLOMA,
                     EducationDocType.HIGHER_EDU_СERT,
@@ -62,9 +64,38 @@ class OCRService:
             for file_path in glob.glob(pattern):
                 os.remove(file_path)
 
-        return self._define_doc_by_text(text)
+        return await self._define_doc_by_text(text)
 
-    def _define_doc_by_text(self, text: str) -> Doc:
+    async def _define_old_diploma(self, text: str) -> Doc:
+        if not (
+            "диплом" in text.lower()
+            and "о высшем образовании" in text.lower().replace("\n", "")
+        ):
+            return Doc(type=EducationDocType.OTHER)
+
+        education_str = (
+            (
+                await llm_interface.create_completions(
+                    "Вычлени строку о специальности из запроса и укажи ее в ответе\n\n"
+                    f"Запрос: {text}\n"
+                )
+            )
+            .split("</think>\n\n")[-1]
+            .strip()
+        )
+        formated_education = await education_matcher.find_match(
+            Specialty(original_text=education_str)
+        )
+        if not formated_education["found"]:
+            return Doc(type=EducationDocType.OTHER)
+
+        return Doc(
+            type=EducationDocType.DIPLOMA,
+            code=formated_education["code"],
+            name=formated_education["name"],
+        )
+
+    async def _define_doc_by_text(self, text: str) -> Doc:
         answer = Doc(type=EducationDocType.OTHER)
         matches = re.findall(r"\d{2}\.\d{2}\.(?!20)\d{2}", text)
 
@@ -74,7 +105,7 @@ class OCRService:
                 cifr_napr = el
                 break
         else:
-            return answer
+            return await self._define_old_diploma(text)
 
         if "справка" in text.lower():
             answer.type = EducationDocType.HIGHER_EDU_СERT
