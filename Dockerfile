@@ -1,21 +1,15 @@
-FROM python:3.12
+FROM python:3.12-alpine
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libglib2.0-0 \
-    libsm6 \
-    libxrender1 \
-    libxext6 \
-    libgl1 \
-    poppler-utils \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache poppler-utils
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml .
+RUN pip install --no-cache-dir .
 
-COPY *.py .
-COPY configs ./configs
-COPY service ./service
+COPY . .
 
 CMD ["python", "main.py"]
