@@ -1,0 +1,13 @@
+services:
+  moderator-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: llm_resume_moderator
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${APP_PORT:-8001}:${APP_PORT:-8001}"
+    volumes:
+      - ./storage:/app/storage

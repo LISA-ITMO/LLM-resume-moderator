@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools==80"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-resume-moderator"
+version = "0.1.0"
+description = "LLM Resume Moderator: PaddleOCR + LLM + rules moderation"
+dependencies = [
+    "fastapi==0.135.3",
+    "pydantic==2.11.5",
+    "pydantic-settings==2.10.1",
+    "uvicorn==0.41.0",
+    "openai==1.66.3",
+    "python-dotenv==1.0.1",
+    "pdf2image==1.17.0",
+    "python-multipart==0.0.20",
+]
+requires-python = ">=3.12,<3.13"
+license = "MIT"
+
+[tool.setuptools.packages.find]
+include = ["configs*", "routers*"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest==7.4.3",
+    "pytest-asyncio==0.21.1",
+    "pytest-cov==4.1.0",
+    "requests==2.32.3",
+    "flake8==7.2.0",
+    "black==25.1.0",
+    "isort==5.13.2",
+    "flake8-isort==6.1.2",
+]
