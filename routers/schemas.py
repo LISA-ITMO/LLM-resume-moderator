@@ -83,12 +83,16 @@ class NoValidReason(str, Enum):
     SpecialtyNotFound: Не найден ни код, ни название специальности
     SpecialtyNotInList: Специальности нет в списке допустимых
     CertificateTooFar: Справка, предполагаемая дата окончания более чем через 1.5 года
+    FullNameMissing: В документе не найдено ФИО
+    FullNameMismatch: ФИО в документе не совпадает с ФИО в анкете
     """
 
     NotHigherEducation = "NotHigherEducation"
     SpecialtyNotFound = "SpecialtyNotFound"
     SpecialtyNotInList = "SpecialtyNotInList"
     CertificateTooFar = "CertificateTooFar"
+    FullNameMissing = "FullNameMissing"
+    FullNameMismatch = "FullNameMismatch"
 
 
 class EducationResolution(BaseModel):
@@ -112,6 +116,7 @@ class EducationInfo(BaseModel):
 
     Args:
         isHigherEducation: Является ли высшим образованием
+        fullName: ФИО владельца документа (None если не найдено в документе)
         code: Код специальности по классификатору (None если не высшее)
         name: Название специальности по классификатору (None если не высшее)
         degree: Степень высшего образования (None если не высшее)
@@ -124,6 +129,7 @@ class EducationInfo(BaseModel):
         json_schema_extra={
             "example": {
                 "isHigherEducation": True,
+                "fullName": "Шилоносов Владимир Андреевич",
                 "code": "01.03.02",
                 "name": "Прикладная математика и информатика",
                 "degree": "Bachelor",
@@ -135,6 +141,7 @@ class EducationInfo(BaseModel):
     )
 
     isHigherEducation: bool
+    fullName: Optional[str] = None
     code: Optional[str] = None
     name: Optional[str] = None
     degree: Optional[Degree] = None

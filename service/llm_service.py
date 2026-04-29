@@ -40,9 +40,12 @@ class _EducationLLMResult(BaseModel):
     """Внутренняя модель структурированного ответа LLM по образованию.
 
     Не содержит resolution — он вычисляется отдельно по бизнес-правилам.
+    fullNameMatches: None если ФИО не найдено в документе, иначе результат сравнения с анкетой.
     """
 
     isHigherEducation: bool
+    fullName: Optional[str] = None
+    fullNameMatches: Optional[bool] = None
     code: Optional[str] = None
     name: Optional[str] = None
     degree: Optional[Degree] = None
@@ -115,7 +118,7 @@ class LLMService:
         return ResponseWithReasoning.model_validate_json(self._extract_json(content))
 
     async def check_education(
-        self, edu: HigherEducation, file_path: str
+        self, edu: HigherEducation, file_path: str, resume_fullname: str
     ) -> EducationInfo:
         """Верифицирует документ об образовании через VLM.
 
@@ -125,6 +128,7 @@ class LLMService:
         Args:
             edu: Запись о высшем образовании из анкеты
             file_path: Путь к PDF-файлу документа об образовании
+            resume_fullname: ФИО владельца из анкеты для сверки с документом
 
         Returns:
             EducationInfo: Верифицированные данные об образовании с вердиктом
@@ -136,6 +140,7 @@ class LLMService:
         image_contents = [self._page_to_content(page) for page in pages]
 
         edu_text = (
+            f"ФИО из анкеты: {resume_fullname}\n"
             f"Специальность: {edu.specialty}\n"
             f"Уровень: {edu.level}\n"
             f"Учебное заведение: {edu.institutionName}\n"
@@ -161,10 +166,20 @@ class LLMService:
                         "Найди стандартизованное название и код специальности из предоставленного списка. "
                         "Код должен быть из списка — если в документе другой код, найди по названию. "
                         "Если это Certificate — укажи предполагаемый год окончания в expectedGraduationYear. "
+                        "Извлеки ФИО владельца документа точно как написано в документе в поле fullName "
+                        "(null если ФИО не найдено). "
+                        "Сравни ФИО из документа с ФИО из анкеты: учитывай разный регистр, "
+                        "родительный падеж, возможное отсутствие отчества — если это один и тот же человек, "
+                        "fullNameMatches = true, иначе false; если ФИО не найдено в документе — null. "
                         "Верни строго валидный JSON без markdown: "
-                        '{"isHigherEducation": true/false, "code": "01.03.02" or null, '
-                        '"name": "Название" or null, "degree": "Bachelor"/"Master"/"Specialist" or null, '
-                        '"docType": "Diploma"/"Certificate" or null, "expectedGraduationYear": 2026 or null}'
+                        '{"isHigherEducation": true/false, '
+                        '"fullName": "Фамилия Имя Отчество" or null, '
+                        '"fullNameMatches": true/false/null, '
+                        '"code": "01.03.02" or null, '
+                        '"name": "Название" or null, '
+                        '"degree": "Bachelor"/"Master"/"Specialist" or null, '
+                        '"docType": "Diploma"/"Certificate" or null, '
+                        '"expectedGraduationYear": 2026 or null}'
                         " /no_think"
                     ),
                 },
@@ -194,6 +209,7 @@ class LLMService:
 
         return EducationInfo(
             isHigherEducation=result.isHigherEducation,
+            fullName=result.fullName,
             code=result.code,
             name=result.name,
             degree=result.degree,
@@ -214,6 +230,16 @@ class LLMService:
         if not result.isHigherEducation:
             return EducationResolution(
                 valid=False, noValidReason=NoValidReason.NotHigherEducation
+            )
+
+        if result.fullName is None:
+            return EducationResolution(
+                valid=False, noValidReason=NoValidReason.FullNameMissing
+            )
+
+        if result.fullNameMatches is False:
+            return EducationResolution(
+                valid=False, noValidReason=NoValidReason.FullNameMismatch
             )
 
         if result.code is None and result.name is None:
