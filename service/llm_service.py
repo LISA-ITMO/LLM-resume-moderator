@@ -136,6 +136,11 @@ class LLMService:
         Raises:
             Exception: Если PDF не читается или VLM вернул невалидный ответ
         """
+        logger.info(
+            "check_education start: resume_fullname=%r file=%r",
+            resume_fullname,
+            file_path,
+        )
         pages = convert_from_path(file_path, dpi=150, last_page=_MAX_PAGES)
         image_contents = [self._page_to_content(page) for page in pages]
 
@@ -168,9 +173,12 @@ class LLMService:
                         "Если это Certificate — укажи предполагаемый год окончания в expectedGraduationYear. "
                         "Извлеки ФИО владельца документа точно как написано в документе в поле fullName "
                         "(null если ФИО не найдено). "
-                        "Сравни ФИО из документа с ФИО из анкеты: учитывай разный регистр, "
-                        "родительный падеж, возможное отсутствие отчества — если это один и тот же человек, "
-                        "fullNameMatches = true, иначе false; если ФИО не найдено в документе — null. "
+                        "Сравни ФИО из документа с ФИО из анкеты по следующим правилам: "
+                        "1) учитывай разный регистр и родительный падеж; "
+                        "2) если в анкете нет отчества — сравнивай только по фамилии и имени, отсутствие отчества не является несовпадением тоесть если в анкете или дипломе нет отчества то не проверяй отчкство а смотри имя и фамилию "
+                        "3) если владелец документа — женщина (определяй по имени и отчеству)тк фамилия может отличаться (девичья фамилия) "
+                        "то сравнивай по имени и отчеству (фамилия могла измениться после замужества); "
+                        "если совпадают — fullNameMatches = true, иначе false; если ФИО не найдено в документе — null. "
                         "Верни строго валидный JSON без markdown: "
                         '{"isHigherEducation": true/false, '
                         '"fullName": "Фамилия Имя Отчество" or null, '
@@ -201,10 +209,13 @@ class LLMService:
         )
 
         content = response.choices[0].message.content
-        logger.debug(
-            "check_education raw response: %s", _truncate_base64(content or "")
-        )
+        logger.info("check_education raw response: %s", _truncate_base64(content or ""))
         result = _EducationLLMResult.model_validate_json(self._extract_json(content))
+        logger.info(
+            "check_education parsed: fullName=%r fullNameMatches=%r",
+            result.fullName,
+            result.fullNameMatches,
+        )
         resolution = self._compute_resolution(result)
 
         return EducationInfo(
