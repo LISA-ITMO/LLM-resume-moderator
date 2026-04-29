@@ -17,6 +17,7 @@ FastAPI-сервис для автоматической модерации ре
 git clone https://github.com/LISA-ITMO/LLM-resume-moderator.git
 cd LLM-resume-moderator
 cp .env.example .env  # заполнить переменные
+docker compose build
 docker compose up
 ```
 
