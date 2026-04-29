@@ -75,7 +75,11 @@ class SelectionService:
             if not edu.educationFilename:
                 continue
             file_path = self._document_service.get_path(edu.educationFilename)
-            info = await self._llm_service.check_education(edu=edu, file_path=file_path)
+            info = await self._llm_service.check_education(
+                edu=edu,
+                file_path=file_path,
+                resume_fullname=context.resume.fullname,
+            )
             education_info.append(info)
             self._document_service.delete(edu.educationFilename)
 
